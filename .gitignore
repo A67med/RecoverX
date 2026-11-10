@@ -1,0 +1,20 @@
+# Evidence, generated images, recovered outputs and logs must never be committed
+workspace/
+*.img
+*.dd
+*.raw
+*.E01
+recup.*/
+photorec.log
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.env
+
+# Local settings and credentials
+desktop.ini
+Thumbs.db
+.env.*
+!.env.example
