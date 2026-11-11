@@ -18,3 +18,26 @@ desktop.ini
 Thumbs.db
 .env.*
 !.env.example
+
+# Local evidence, recovered content, model binaries and audit logs
+*.e01
+*.ex01
+*.vhd
+*.vhdx
+*.vmdk
+*.aff
+*.001
+*.joblib
+*.pkl
+*.pickle
+*.log
+evidence/
+recovered/
+private_datasets/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.coverage
+htmlcov/
+.streamlit/secrets.toml

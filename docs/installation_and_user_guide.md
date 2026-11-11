@@ -1,67 +1,74 @@
-# Installation, User Guide, Troubleshooting
+# Installation and operation
 
-## 1. Install (tested: Ubuntu 24.04, Python 3.13)
+Use Ubuntu 24.04 or Ubuntu 24.04 under WSL2. The verified local runtime is Python 3.12.3.
+Run all commands in the repository root, not in a PowerShell virtual environment.
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y sleuthkit testdisk dosfstools e2fsprogs mtools
-cd RecoverX
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python3 scripts/check_environment.py
+sudo apt-get install -y python3-venv sleuthkit testdisk dosfstools e2fsprogs mtools
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/python scripts/check_environment.py
+.venv/bin/python -m streamlit run app.py
 ```
-Every line should say `OK`. Exit code 0 = ready.
 
-### Windows (not tested — recommended route: WSL2)
-1. In PowerShell (admin): `wsl --install -d Ubuntu-24.04`, reboot, open "Ubuntu".
-2. Inside Ubuntu, follow section 1 exactly.
-3. Run `streamlit run app.py` and open the printed `http://localhost:8501` link in your Windows browser.
-Native Windows builds of TSK and PhotoRec exist but RecoverX was not tested with them.
+For this checkout:
 
-## 2. Run the app
 ```bash
-streamlit run app.py
+cd /home/ahmed/RecoverX/RecoverX
+.venv/bin/python -m streamlit run app.py
 ```
-Data lives in `workspace/` (change with `RECOVERX_HOME=/path`).
 
-| Page | What to do |
-|---|---|
-| Case Management | paste an **authorized** raw image path, tick the authorization box, create case (SHA-256 computed) |
-| Forensic Analysis | run read-only mmls/fsstat/fls; see deleted entries and features |
-| Intelligent Recovery | choose CART / rule / fixed / manual override; optional ground-truth JSON; start |
-| Recovered Files | filter by engine, integrity state, name/hash; export CSV (contents never opened) |
-| Model Training | features, labels, grid, tree, importances; retrain; install model |
-| Benchmark Laboratory | launch/resume experiments in background; results, charts, paired tests |
-| Evidence & Audit | event log, per-run hashes, re-hash now, export manifest |
-| Settings & Diagnostics | tool versions, packages, storage, disk space |
+Open http://localhost:8501 in your Windows or Linux browser. Configuration binds to localhost;
+the app has no user authentication and should not be exposed to untrusted networks.
+Set `RECOVERX_HOME` to select private storage. Engine timeouts can be set in the recovery panel or
+with `RECOVERX_TSK_TIMEOUT` / `RECOVERX_PHOTOREC_TIMEOUT`. `.env` is not automatically read.
 
-A demo case is ready: test-split image `ext4-delete-s6` with ground truth
-`workspace/datasets/v1/gt_ext4-delete-s6.json`.
+## Everyday workflow
 
-## 3. Tests
+- Register a raw image copy in Case Management. Confirm authorization; its initial SHA-256 is stored.
+- Inspect metadata in Forensic Analysis. Deleted names are filesystem claims, not recovered files.
+- In Intelligent Recovery, automatic modes explain a recommendation but run both tools by default.
+  Fixed/manual single-engine choices are explicit and may miss recoverable files.
+- Start once. Navigation/reruns do not restart the worker. Live status shows real stages and completed-engine counts.
+- Cancel safely when needed. Tools stop; partial output remains. Hash/inventory stages finish before cancellation takes effect.
+- Inspect Recovered Files and its exact-match/unknown states. Export metadata CSV, not recovered executable content.
+- Export JSON manifest and Markdown report from Evidence & Audit. Keep these sensitive reports private.
+
+## Model evaluation and installation without images
+
 ```bash
-python3 -m pytest -q          # unit + integration (real tools) + security + dashboard
+.venv/bin/python scripts/evaluate_model.py
+.venv/bin/python scripts/install_evaluated_model.py
 ```
-If TSK/PhotoRec/mtools are missing, tool tests are **skipped with reason "BLOCKED"** — they are
-not counted as passing.
 
-## 4. Troubleshooting
-| Symptom | Cause / fix |
+These commands use the existing synthetic records, train a JSON CART model and save it only under ignored
+`workspace/`. The old archived `model.joblib` is retained as a historical artifact but never deserialized.
+For a new dataset, use `scripts/run_benchmarks.py --exp ... --dataset ...` and `scripts/train_model.py`.
+Never mix new runs with the archived old timing records: the production policy and timing boundary changed.
+
+## Troubleshooting
+
+| Message | Action |
 |---|---|
-| `engine photorec: MISSING` | `sudo apt-get install testdisk` |
-| PhotoRec run `failed`, "log missing completion marker" | check `runs/<id>/photorec/photorec.log`; image unreadable or killed by timeout (`RECOVERX_PHOTOREC_TIMEOUT`) |
-| `blocked: output directory not empty` | by design — each run needs a fresh directory |
-| Dataset generator: "image not mounted; refusing to write" | needs root and an ext4-capable kernel; run with `sudo` or `--fs fat16 fat32` |
-| CART run says "CART unavailable … rule-v1 used" | no model installed: `python3 scripts/train_model.py --exp workspace/experiments/exp1 --install-only` |
-| Low disk warning | each benchmark run keeps its outputs; delete old `workspace/experiments/*/cases` manually |
+| Missing executables | Install `sleuthkit` and `testdisk`; dataset tests also need `dosfstools` and `mtools`. |
+| Permission denied / blocked output | Select private writable storage; do not run the application as root to bypass it. |
+| Source hash changed | Stop and investigate the image copy; create a new case only after verifying provenance. |
+| Legacy pickle/joblib rejected | Re-evaluate recorded features and install the resulting JSON model. |
+| Incomplete filesystem analysis | Review command errors; the selector cannot justify omitting an engine. |
+| Unfinished checkpoint | Preserve partial output; inspect logs. Starting a fresh run requires acquiring the case lock. |
+| No byte-progress percentage | The tool adapters expose stages and finished file counts, not reliable byte progress. |
+| Unsupported container | Convert/acquire into a single raw image through a separate verified process. |
+| Existing synthetic image | Use a new dataset folder; the generator refuses to overwrite previous images. |
 
-## 5. Demonstration checklist (≈10 min)
-1. `python3 scripts/check_environment.py` → all OK.
-2. `python3 -m pytest -q` → 51 passed.
-3. Dashboard → Settings & Diagnostics (tool versions).
-4. Case Management → create case from `workspace/datasets/v1/images/fat16-delete-s6.img`.
-5. Forensic Analysis → run; point out deleted entries with sizes.
-6. Intelligent Recovery → CART; show decision path; then manual override to `combined`.
-7. Recovered Files → filter `verified_exact_match`; show duplicate groups across engines.
-8. Evidence & Audit → hashes before/after; export manifest; read the disclaimer aloud.
-9. Benchmark Laboratory → explain the negative result with Table 1 and the trade-off chart.
+## Validation
+
+```bash
+.venv/bin/python -m pytest -q
+.venv/bin/python -m ruff check src scripts tests
+.venv/bin/python -m pip check
+.venv/bin/python -m pip_audit
+```
+
+Missing tools cause explicit skips. CI installs them and uses synthetic regular files only, without root mounts.
+The full ext4 corpus generator is a separate privileged workflow. No real evidence is included in the repository.

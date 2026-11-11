@@ -1,5 +1,12 @@
 # Methodology
 
+> **Version boundary:** The sections below describe the archived v0.1 experiment, not fresh v0.2 benchmarks.
+> v0.2 changes automatic execution to conservative combined recovery, inspects volumes in ordinary fixed runs,
+> introduces safe JSON models, and compares optional class balancing on validation data. The pre-registered
+> historical objective remains unchanged. New evaluation results and limitations are recorded in
+> [modernization verification](modernization_verification.md). Do not combine old and new timing records.
+
+
 All choices below were fixed in `config/objective.json` **before** any benchmark run.
 
 ## Corpus
