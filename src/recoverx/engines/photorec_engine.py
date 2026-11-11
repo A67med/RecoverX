@@ -38,14 +38,18 @@ class PhotoRecEngine(BaseEngine):
 
     def _execute(self, image: Path, output_dir: Path, run: EngineRun, *, sector_offset: int,
                  timeout: float, cancel_event: threading.Event | None) -> None:
-        # partition_none scans the image as a single unit; sector_offset is recorded
-        # but PhotoRec's own detection is used (documented limitation).
+        if sector_offset:
+            raise ValueError("PhotoRec partition offsets are unsupported; use whole-image carving at offset 0")
         args = ["photorec", "/log", "/d", str(output_dir / "recup"), "/cmd", str(image), self.script]
         res = run_cmd(args, cwd=output_dir, timeout=timeout, cancel_event=cancel_event)
         d = res.to_dict(800)  # stdout is ncurses screen output; keep only the tail
         run.commands.append(d)
         log = output_dir / "photorec.log"
-        log_text = log.read_text(errors="replace") if log.exists() else ""
+        log_text = ""
+        if log.exists() and not log.is_symlink():
+            with log.open("rb") as stream:
+                stream.seek(max(0, log.stat().st_size - 65536))
+                log_text = stream.read(65536).decode("utf-8", errors="replace")
         if res.timed_out:
             run.status, run.error = "timed_out", f"photorec exceeded {timeout}s"
         elif res.cancelled:
@@ -74,8 +78,10 @@ class PhotoRecEngine(BaseEngine):
         out = {}
         for rep in output_dir.glob("recup.*/report.xml"):
             try:
+                if rep.is_symlink() or rep.parent.is_symlink() or rep.stat().st_size > 8 * 1024 * 1024:
+                    continue
                 root = ET.parse(rep).getroot()
-            except ET.ParseError:
+            except (ET.ParseError, OSError):
                 continue
             for fo in root.iter():
                 if not fo.tag.endswith("fileobject"):

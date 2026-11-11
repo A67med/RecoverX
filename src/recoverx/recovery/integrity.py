@@ -22,6 +22,7 @@ from ..models import RecoveredFile
 def assign_duplicate_groups(files: list[RecoveredFile]) -> dict[str, list[RecoveredFile]]:
     by_hash: dict[str, list[RecoveredFile]] = defaultdict(list)
     for f in files:
+        f.duplicate_group = None
         by_hash[f.sha256].append(f)
     for sha, group in by_hash.items():
         if len(group) > 1:
@@ -46,6 +47,9 @@ def canonical_view(files: list[RecoveredFile]) -> list[dict]:
 
 
 def apply_ground_truth(files: Iterable[RecoveredFile], gt: dict | None) -> None:
+    files = list(files)
+    for f in files:
+        f.ground_truth_id = None
     if not gt:
         for f in files:
             f.integrity_state = "invalid_or_unreadable" if f.detected_type == "unreadable" else "ground_truth_unavailable"

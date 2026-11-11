@@ -10,6 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from recoverx.benchmarking.experiment import Experiment  # noqa: E402
+from recoverx.ml.selector import CartSelector
 from recoverx.config import get_settings  # noqa: E402
 
 ap = argparse.ArgumentParser()
@@ -23,7 +24,12 @@ if not a.install_only:
 import json  # noqa: E402
 rep = json.loads((a.exp / "training_report.json").read_text())
 src = Path(rep["model_dir"])
+if not src.exists():
+    src = exp.dir / "models" / rep["model_version"]
+CartSelector.load(src)
 dst = get_settings().ensure().models_dir / src.name
 if not dst.exists():
-    shutil.copytree(src, dst)
+    dst.mkdir()
+    for name in ("model.json", "meta.json"):
+        shutil.copy2(src / name, dst / name)
 print(f"active model: {dst}")

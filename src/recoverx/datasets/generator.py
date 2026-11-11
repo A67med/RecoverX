@@ -65,6 +65,10 @@ def make_content(ftype: str, size: int, rng: random.Random) -> bytes:
         buf = io.BytesIO()
         fmt = {"png": "PNG", "jpg": "JPEG", "pdf": "PDF"}[ftype]
         kw = {"quality": 90} if ftype in ("jpg", "pdf") else {}
+        if ftype == "pdf":
+            from datetime import datetime, timezone
+            kw.update(creationDate=datetime(2024, 1, 1, tzinfo=timezone.utc).timetuple(),
+                      modDate=datetime(2024, 1, 1, tzinfo=timezone.utc).timetuple())
         img.save(buf, format=fmt, **kw)
         return buf.getvalue()
     if ftype == "txt":
@@ -112,7 +116,7 @@ class FatImage:
         self.path, self.fs, self.size_mb, self.tmp = path, fs, size_mb, tmp
 
     def create(self):
-        with open(self.path, "wb") as f:
+        with open(self.path, "xb") as f:
             f.truncate(self.size_mb * 2**20)
         self._mkfs()
 
@@ -161,7 +165,7 @@ class Ext4Image:
         self.mnt.mkdir(exist_ok=True)
 
     def create(self):
-        with open(self.path, "wb") as f:
+        with open(self.path, "xb") as f:
             f.truncate(self.size_mb * 2**20)
         self._mkfs()
 
@@ -253,6 +257,12 @@ def _fill(b, rng, prefix: str, cap: int) -> list[dict]:
 
 def build_image(out_dir: Path, image_id: str, fs: str, scenario: str, seed: int, size_mb: int,
                 split: str, tmp_root: Path) -> dict:
+    from ..forensic.image_validator import safe_identifier
+    safe_identifier(image_id)
+    if fs not in FILESYSTEMS or scenario not in SCENARIOS or not 8 <= size_mb <= 4096:
+        raise ValueError("Unsupported synthetic image configuration")
+    if (out_dir / "images" / f"{image_id}.img").exists() or (out_dir / "reference" / image_id).exists():
+        raise FileExistsError("Refusing to overwrite an existing synthetic image or its reference data")
     rng = random.Random(f"{image_id}|{seed}")
     img_path = out_dir / "images" / f"{image_id}.img"
     ref_dir = out_dir / "reference" / image_id

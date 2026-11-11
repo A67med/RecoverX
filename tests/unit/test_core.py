@@ -10,7 +10,7 @@ from recoverx.ml.features import FEATURE_NAMES, extract_features, validate_featu
 from recoverx.ml.labeling import derive_label, load_objective
 from recoverx.ml.selector import CartSelector, rule_select
 from recoverx.models import RecoveredFile
-from recoverx.recovery.integrity import (apply_ground_truth, assign_duplicate_groups, canonical_view,
+from recoverx.recovery.integrity import (apply_ground_truth, canonical_view,
                                          recovery_metrics)
 
 

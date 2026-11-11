@@ -5,7 +5,6 @@ import importlib
 import os
 import shutil
 import sys
-from pathlib import Path
 
 from .config import get_settings
 from .engines.engine_registry import all_capabilities
