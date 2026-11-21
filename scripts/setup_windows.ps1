@@ -5,7 +5,7 @@
 #   separately, only at the moment you start an acquisition.
 # - Never installs WSL or a Linux distribution. Installing TestDisk inside an
 #   existing WSL distribution happens only after you type Y.
-param([switch]$NonInteractive)
+param([switch]$NonInteractive, [switch]$NoShortcut)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
@@ -182,7 +182,8 @@ try {
 
     Step 'Creating the desktop shortcut'
     $desktop = [Environment]::GetFolderPath('Desktop')
-    if ($desktop -and (Test-Path -LiteralPath $desktop)) {
+    if ($NoShortcut) { Write-Host 'Skipped (-NoShortcut).' }
+    elseif ($desktop -and (Test-Path -LiteralPath $desktop)) {
         $shell = New-Object -ComObject WScript.Shell
         $shortcut = $shell.CreateShortcut((Join-Path $desktop 'RecoverX.lnk'))
         $shortcut.TargetPath = (Join-Path $root 'START_RECOVERX_WINDOWS.cmd')
