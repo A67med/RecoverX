@@ -114,8 +114,9 @@ def test_hash_mismatch_detected(fat_fixture, tmp_path):
     with open(copy, "r+b") as f:  # simulate tampering after acquisition
         f.seek(100)
         f.write(b"\xff")
-    with pytest.raises(match='does not match'):
-        run_recovery(case, "tsk", ground_truth=fat_fixture["gt"])
+    run = run_recovery(case, "tsk", ground_truth=fat_fixture["gt"])
+    assert run["status"] == "blocked" and not run["engine_runs"]
+    assert "does not match" in run["error"]
     assert case.load()["status"] == "evidence_changed"
     assert case.load()['runs'][-1]['status'] == 'blocked'
 
