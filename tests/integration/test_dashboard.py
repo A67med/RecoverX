@@ -103,9 +103,9 @@ def test_usb_flow_requires_explicit_confirmation_dialog(tmp_path, monkeypatch):
     """A (synthetic) USB device can be selected; Start opens the identity confirmation, nothing starts before it."""
     from recoverx.usb import devices
     from recoverx import workflow
-    fake = devices.build_inventory([{"number": 3, "size": 8_000_000_000, "sector_size": 512, "bus_type": "USB",
+    fake = devices.build_inventory([{"number": 3, "size": 64_000_000, "sector_size": 512, "bus_type": "USB",
                                      "vendor": "Generic", "product": "Flash Disk", "serial": "XYZ"}],
-                                   {"G:": [(3, 1048576, 7_999_000_000)]}, {"G:": {"filesystem": "FAT32", "label": "PHOTOS"}},
+                                   {"G:": [(3, 1048576, 62_000_000)]}, {"G:": {"filesystem": "FAT32", "label": "PHOTOS"}},
                                    None, {})
     monkeypatch.setattr(devices, "list_devices", lambda **kw: fake)
     import recoverx.usb.imaging as imaging
@@ -115,6 +115,9 @@ def test_usb_flow_requires_explicit_confirmation_dialog(tmp_path, monkeypatch):
     monkeypatch.setattr(workflow, "start_quick_job", lambda **kw: started.append(kw))
     import recoverx.ui.quick_app as qa
     monkeypatch.setattr(qa, "start_quick_job", lambda **kw: started.append(kw))
+    # Engine availability is host-specific (CI runners have none); this test is about the USB flow.
+    monkeypatch.setattr(qa, "_diagnostics", lambda: {"engines": {"tsk": True, "photorec": True},
+                                                   "versions": {"tsk": "4.15.0", "photorec": "7.1"}})
     at = _app()
     at.session_state["rx_output"] = str(tmp_path / "out")
     at.run()

@@ -70,7 +70,8 @@ def test_inventory_skips_symlinks_fifos_and_hardlinks(tmp_path):
     _symlink(root/'symlink', secret)
     (root/'dir-link').symlink_to(tmp_path,target_is_directory=True)
     os.link(secret,root/'hardlink')
-    os.mkfifo(root/'pipe')
+    if hasattr(os, 'mkfifo'):  # FIFOs do not exist on Windows
+        os.mkfifo(root/'pipe')
     (root/'good').write_text('recovered')
     run=EngineRun('tsk','test','completed',str(root),0.0)
     files=SleuthKitEngine().inventory(root,run)
@@ -177,6 +178,8 @@ def test_hashing_rejects_symlink_and_fifo_without_blocking(tmp_path):
     from recoverx.forensic.hashing import sha256_file
     source=tmp_path/'real'; source.write_bytes(b'evidence')
     link=tmp_path/'link'; _symlink(link, source)
-    fifo=tmp_path/'pipe'; os.mkfifo(fifo)
-    for path in (link,fifo):
+    paths=[link]
+    if hasattr(os, 'mkfifo'):  # FIFOs do not exist on Windows
+        fifo=tmp_path/'pipe'; os.mkfifo(fifo); paths.append(fifo)
+    for path in paths:
         with pytest.raises(OSError): sha256_file(path)
