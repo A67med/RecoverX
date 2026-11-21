@@ -52,3 +52,23 @@ Linux/WSL, trusted local examiner, private workspace. Recovered files are not re
 Symlink/FIFO/hardlink output entries are skipped; image/output overlap is rejected. External forensic
 tools remain native parsers of untrusted data: use an isolated OS environment for hostile evidence.
 JSON model digests detect accidental changes; they are not digital signatures or trust endorsements.
+
+
+## v0.4 additions
+
+```
+ui/quick_app.py ──► workflow.QuickJob (background thread, real stage events, cancel)
+                      ├─ usb.controller.AcquisitionJob ──► usb.helper (elevated via UAC, or in-process)
+                      │      └─ usb.imaging.acquire(WindowsDiskSource → new .img)  usb.partitions
+                      ├─ forensic.case_store.create_case (baseline hash == acquisition image hash)
+                      ├─ recovery.orchestrator.run_recovery (unchanged engines/selection/integrity)
+                      └─ recovery.export.export_run (+ recovery.validation) → output folder
+usb.devices: win32 IOCTL inventory + volume extents + CIM enrichment → build_inventory (pure, tested)
+```
+
+* `usb/win32.py` — ctypes wrappers; handles can only be opened with query or GENERIC_READ access.
+* `usb/devices.py` — discovery and the protection policy (`build_inventory`, `identity_mismatch`).
+* `usb/imaging.py` — source-agnostic streaming acquisition, verification and destination validation.
+* `usb/helper.py` / `usb/controller.py` — the elevated worker protocol (request/status/result/cancel files).
+* `workflow.py` — Quick Recovery pipeline and outcome classification (success only for verified output).
+* `recovery/export.py`, `recovery/validation.py` — verified copies, reports and structural checks.

@@ -12,22 +12,17 @@ python3 -m venv .venv
 .venv/bin/python -m streamlit run app.py
 ```
 
-## Windows 11 / Windows 10 with WSL 2
+## Windows 11 / Windows 10 (64-bit)
 
-1. Install 64-bit Python 3.11, 3.12 or 3.13.
-2. For PhotoRec, install Ubuntu under WSL 2 and complete its first launch as a regular Linux user.
-   Make it the default WSL distribution if needed. Inside Ubuntu, run
-   `sudo apt update && sudo apt install testdisk`. TSK-only recovery can run without WSL.
-3. Run `SETUP_WINDOWS.cmd` from a writable copy of the source. It installs Sleuth Kit and Python dependencies.
-4. Run `START_RECOVERX_WINDOWS.cmd`. Quick Recovery opens by default. Use **Show advanced pages**
-   in the sidebar to reach case analysis, audit, model evaluation and benchmarking.
+Follow the step-by-step guide in [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md):
+install Python 3.12 (64-bit), double-click `SETUP_WINDOWS.cmd`, then start RecoverX from the desktop
+icon. TSK runs natively; PhotoRec runs as a non-root user in the default WSL distribution (optional).
 
-The app runs as a regular Windows user. PhotoRec runs as a non-root Linux user through WSL.
-Use image and output paths on local drives visible to WSL and keep the same default distribution
-during a run. Cancelling a WSL PhotoRec scan waits for it to exit or reach its configured timeout.
-The app does not capture physical disks on Windows. The default workspace is
-`%LOCALAPPDATA%\RecoverX`. Setup moves an unusable virtual environment aside as
-`.venv.broken-…` so a fresh one can be created without touching the workspace.
+Quick Recovery (v0.4) can image a **USB flash drive directly**: select it under *USB drive*, choose an
+output folder on another physical disk, confirm the disk identity and approve the Windows permission
+prompt. Only the imaging worker is elevated. The workspace is `%LOCALAPPDATA%\RecoverX`; recovered
+files, reports and the disk image go to the chosen output folder. See
+[USB_RECOVERY_TESTING.md](USB_RECOVERY_TESTING.md) for the hardware test procedure and limitations.
 
 ## Kali desktop launcher
 
@@ -48,6 +43,10 @@ Set `RECOVERX_HOME` to select private storage. Engine timeouts can be set in the
 with `RECOVERX_TSK_TIMEOUT` / `RECOVERX_PHOTOREC_TIMEOUT`. `.env` is not automatically read.
 
 ## Everyday workflow
+
+Quick Recovery (main page): 1 select a USB drive or image · 2 choose one of the six methods · 3 choose an
+output folder · 4 start and monitor · 5 review, validate and export results. The steps below describe the
+expert pages in the *Advanced workspace*.
 
 - Register a raw image copy in Case Management. Confirm authorization; its initial SHA-256 is stored.
 - Inspect metadata in Forensic Analysis. Deleted names are filesystem claims, not recovered files.

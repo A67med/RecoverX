@@ -1,5 +1,9 @@
-RecoverX v0.3.0 for Windows
+RecoverX v0.4.0 for Windows 10/11 (64-bit)
 
-Read WINDOWS_START_HERE_AR.md or docs/installation_and_user_guide.md.
-Run SETUP_WINDOWS.cmd before START_RECOVERX_WINDOWS.cmd.
-PhotoRec requires TestDisk in a default non-root WSL 2 distribution.
+1. Install Python 3.12 (64-bit).
+2. Double-click SETUP_WINDOWS.cmd.
+3. Double-click the RecoverX desktop icon (or START_RECOVERX_WINDOWS.cmd).
+
+Step-by-step guide: docs\WINDOWS_INSTALL.md
+USB hardware test procedure: docs\USB_RECOVERY_TESTING.md
+PhotoRec (optional) needs TestDisk in a default, non-root WSL 2 distribution.

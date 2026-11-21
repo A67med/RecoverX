@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "recoverx"
-version = "0.3.0"
+version = "0.4.0"
 description = "Auditable deleted-file recovery with TSK, PhotoRec and interpretable CART recommendations"
 requires-python = ">=3.11"
 readme = "README.md"
