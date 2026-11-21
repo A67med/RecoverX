@@ -2,10 +2,10 @@
 setlocal
 cd /d "%~dp0"
 title RecoverX - Quick Recovery
-set "RECOVERX_SIMPLE_UI=1"
 set "RECOVERX_HOME=%LOCALAPPDATA%\RecoverX"
 set "PYTHON=%~dp0.venv\Scripts\python.exe"
-if not exist "%PYTHON%" (
+"%PYTHON%" -c "import sys; sys.exit(0 if (3, 11) <= sys.version_info[:2] < (3, 14) and sys.maxsize > 2**32 else 1)" >nul 2>&1
+if errorlevel 1 (
     echo RecoverX must be set up first.
     echo Double-click SETUP_WINDOWS.cmd, then try again.
     pause
@@ -13,12 +13,6 @@ if not exist "%PYTHON%" (
 )
 if not exist "%~dp0tools\tsk\tsk_recover.exe" if not exist "%~dp0tools\tsk\bin\tsk_recover.exe" (
     echo Sleuth Kit binaries are not installed.
-    echo Run SETUP_WINDOWS.cmd again.
-    pause
-    exit /b 1
-)
-if not exist "%~dp0tools\photorec\photorec_win.exe" (
-    echo PhotoRec binaries are not installed.
     echo Run SETUP_WINDOWS.cmd again.
     pause
     exit /b 1

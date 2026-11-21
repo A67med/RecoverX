@@ -19,7 +19,7 @@ def validate_image(path: str | Path) -> Path:
         raise ImageValidationError("path contains NUL byte")
     try:
         p = p.resolve(strict=True)
-    except (FileNotFoundError, OSError) as e:
+    except (OSError, RuntimeError) as e:
         raise ImageValidationError(f"image not found: {path}") from e
     if not p.is_file():
         raise ImageValidationError(f"not a regular file: {p}")
@@ -27,6 +27,8 @@ def validate_image(path: str | Path) -> Path:
         raise ImageValidationError(f"image not readable: {p}")
     if p.stat().st_size == 0:
         raise ImageValidationError("image is empty")
+    if p.suffix.lower() not in VERIFIED_EXTENSIONS:
+        raise ImageValidationError("Unsupported container: provide a single raw .img/.dd/.raw/.bin/.001 image; E01, archives and virtual disks need separate conversion")
     return p
 
 
@@ -44,7 +46,7 @@ def ensure_safe_output(output_dir: str | Path, evidence: str | Path) -> Path:
     """Refuse output locations equal to, inside, or containing the evidence file."""
     out = Path(output_dir).expanduser().resolve()
     ev = Path(evidence).expanduser().resolve()
-    if out == ev or ev in out.parents:
+    if out == ev or ev in out.parents or out in ev.parents:
         raise UnsafePathError("output path collides with the evidence image")
     if out.exists() and not out.is_dir():
         raise UnsafePathError(f"output path exists and is not a directory: {out}")

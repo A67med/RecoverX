@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import uuid
-from pathlib import Path
 
 from .config import get_settings
 from .datasets.generator import generate_dataset, ground_truth_for, validate_dataset

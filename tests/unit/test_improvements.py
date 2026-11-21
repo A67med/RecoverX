@@ -12,7 +12,6 @@ from pathlib import Path
 
 import pytest
 
-from recoverx.exceptions import EvidenceIntegrityError
 from recoverx.forensic.case_store import create_case
 from recoverx.ml.model_install import bundled_model_dir, install_bundled_model
 from recoverx.ml.selector import CartSelector
@@ -35,12 +34,12 @@ def test_changed_evidence_blocks_before_invoking_any_engine(tmp_path, monkeypatc
         raise AssertionError('forensic engine invoked despite changed evidence')
 
     monkeypatch.setattr('recoverx.recovery.orchestrator.get_engine', forbidden)
-    with pytest.raises(EvidenceIntegrityError, match='does not match'):
-        run_recovery(case, 'tsk')
+    run = run_recovery(case, 'tsk')
+    assert run['status'] == 'blocked' and 'does not match' in run['error']
     rec = case.load()
     assert rec['status'] == 'evidence_changed'
     assert rec['last_hash_check']['unchanged'] is False
-    assert rec['runs'] == []
+    assert not rec['runs'][0]['engine_runs']
     assert {'evidence_check_failed', 'run_blocked'} <= {x['event'] for x in case.events()}
 
 
@@ -48,16 +47,16 @@ def test_missing_baseline_blocks_recovery(tmp_path):
     img = tmp_path / 'data.img'
     img.write_bytes(b'evidence')
     case, _rec = create_case(img, compute_hash=False)
-    with pytest.raises(EvidenceIntegrityError, match='No initial'):
-        run_recovery(case, 'tsk')
+    run = run_recovery(case, 'tsk')
+    assert run['status'] == 'blocked' and 'No initial' in run['error']
     assert case.load()['status'] == 'evidence_not_baselined'
 
 
 def test_missing_evidence_records_failure(tmp_path):
     image, case = case_with_image(tmp_path)
     image.unlink()
-    with pytest.raises(EvidenceIntegrityError, match='cannot be read'):
-        run_recovery(case, 'tsk')
+    run = run_recovery(case, 'tsk')
+    assert run['status'] == 'blocked' and 'cannot be read' in run['error']
     assert case.load()['status'] == 'evidence_unavailable'
 
 
@@ -67,7 +66,7 @@ def test_start_timestamp_and_progress_are_per_run(tmp_path, monkeypatch):
     time.sleep(.015)
 
     class FakeEngine:
-        def run(self, img, output_dir, *, sector_offset, timeout, run_id):
+        def run(self, img, output_dir, *, sector_offset, timeout, run_id, **kwargs):
             return EngineRun(engine='tsk', run_id=run_id, status='completed',
                              output_dir=str(output_dir), elapsed_s=0.001)
 
@@ -78,7 +77,8 @@ def test_start_timestamp_and_progress_are_per_run(tmp_path, monkeypatch):
     assert datetime.fromisoformat(run['started_at']) >= initial_creation
     assert run['started_at'] != case.load()['created_at']
     assert run['source_unchanged'] is True
-    assert events[0].startswith('Checking') and events[-1].startswith('Finished')
+    assert case.load()['analysis'] == {**run['analysis'], 'features': run['features'], 'at': run['finished_at']}
+    assert events[0]['stage'] == 'run_started' and events[-1]['stage'] == 'run_finished'
 
 
 def test_pdf_export_has_case_data_and_preserves_no_file_content(tmp_path):
@@ -102,7 +102,7 @@ def test_pdf_includes_run_and_engine_metadata(tmp_path, monkeypatch):
     _image, case = case_with_image(tmp_path)
 
     class FakeEngine:
-        def run(self, img, output_dir, *, sector_offset, timeout, run_id):
+        def run(self, img, output_dir, *, sector_offset, timeout, run_id, **kwargs):
             return EngineRun(engine='tsk', run_id=run_id, status='completed',
                              output_dir=str(output_dir), elapsed_s=.001)
 
@@ -120,7 +120,7 @@ def test_pdf_lists_recovered_names_and_hashes(tmp_path, monkeypatch):
     target_hash = 'abcd' * 16
 
     class FakeEngine:
-        def run(self, img, output_dir, *, sector_offset, timeout, run_id):
+        def run(self, img, output_dir, *, sector_offset, timeout, run_id, **kwargs):
             f = RecoveredFile(recovery_id=run_id+'-1', engine='tsk', run_id=run_id,
                               recovered_name='restored-sample.txt', relative_path='files/restored-sample.txt',
                               size=16, sha256=target_hash, extension='.txt', detected_type='text/plain')

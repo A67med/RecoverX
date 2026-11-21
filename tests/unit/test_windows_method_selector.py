@@ -7,7 +7,6 @@ import ast
 from pathlib import Path
 
 from recoverx.recovery.orchestrator import _select
-from recoverx.quick import guided_recovery
 
 
 def test_windows_quick_options_match_supported_methods():
@@ -20,8 +19,8 @@ def test_windows_quick_options_match_supported_methods():
     assert mapping['TSK only'] == 'tsk'
     assert mapping['PhotoRec only'] == 'photorec'
     assert mapping['TSK + PhotoRec (both)'] == 'combined'
-    assert mapping['Automatic (CART only)'] == 'cart'
-    assert mapping['Automatic (rule-v1 only)'] == 'rule'
+    assert mapping['Conservative (CART advice)'] == 'cart'
+    assert mapping['Conservative (rule-v1 advice)'] == 'rule'
     assert 'st.selectbox(\'Recovery strategy\'' in source
     assert 'method = QUICK_RECOVERY_METHODS[method_choice]' in source
     assert 'method=method, progress=' in source

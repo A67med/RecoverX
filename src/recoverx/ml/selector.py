@@ -6,11 +6,13 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-import joblib
+import hashlib
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier, export_text
 
 from ..exceptions import ModelError
+from .json_tree import JsonTree, export_tree
+from ..forensic.image_validator import safe_identifier
 from .features import FEATURE_NAMES, FEATURE_SCHEMA_VERSION, validate_features
 
 RULE_POLICY_VERSION = "rule-v1"
@@ -37,15 +39,15 @@ class CartSelector:
 
     @classmethod
     def train(cls, X: list[list[float]], y: list[str], *, max_depth: int, min_samples_leaf: int,
-              seed: int = 0, extra_meta: dict | None = None) -> "CartSelector":
+              seed: int = 0, class_weight=None, extra_meta: dict | None = None) -> "CartSelector":
         clf = DecisionTreeClassifier(criterion="gini", max_depth=max_depth,
-                                     min_samples_leaf=min_samples_leaf, random_state=seed)
+                                     min_samples_leaf=min_samples_leaf, random_state=seed, class_weight=class_weight)
         clf.fit(np.asarray(X, dtype=float), np.asarray(y))
         meta = {
             "model_type": "sklearn.tree.DecisionTreeClassifier (CART)",
             "feature_names": FEATURE_NAMES, "feature_schema_version": FEATURE_SCHEMA_VERSION,
             "classes": clf.classes_.tolist(),
-            "hyperparameters": {"max_depth": max_depth, "min_samples_leaf": min_samples_leaf, "random_state": seed},
+            "hyperparameters": {"max_depth": max_depth, "min_samples_leaf": min_samples_leaf, "random_state": seed, "class_weight": class_weight},
             "trained_at": datetime.now(timezone.utc).isoformat(), "n_train": len(y),
             "train_range": {k: [float(np.min(np.asarray(X)[:, i])), float(np.max(np.asarray(X)[:, i]))]
                             for i, k in enumerate(FEATURE_NAMES)},
@@ -54,28 +56,44 @@ class CartSelector:
         return cls(clf, meta)
 
     def save(self, directory: str | Path, version: str) -> Path:
-        d = Path(directory) / version
-        d.mkdir(parents=True, exist_ok=True)
-        joblib.dump(self.model, d / "model.joblib")
+        d = Path(directory) / safe_identifier(version)
+        d.mkdir(parents=True, exist_ok=False)
+        payload = json.dumps(export_tree(self.model), allow_nan=False).encode()
+        (d / "model.json").write_bytes(payload)
         meta = {**self.meta, "version": version, "tree_text": self.tree_text(),
-                "feature_importance": self.importances()}
-        (d / "meta.json").write_text(json.dumps(meta, indent=2))
+                "feature_importance": self.importances(), "serialization": "recoverx-cart-json-v1",
+                "model_sha256": hashlib.sha256(payload).hexdigest()}
+        (d / "meta.json").write_text(json.dumps(meta, indent=2, allow_nan=False))
         return d
 
     @classmethod
     def load(cls, directory: str | Path) -> "CartSelector":
         d = Path(directory)
         try:
+            if (d / "meta.json").stat().st_size > 1024 * 1024:
+                raise ModelError("Model metadata is too large")
             meta = json.loads((d / "meta.json").read_text())
-            model = joblib.load(d / "model.joblib")  # only load models this project produced
-        except FileNotFoundError as e:
-            raise ModelError(f"model not found in {d}") from e
-        if meta.get("feature_schema_version") != FEATURE_SCHEMA_VERSION or meta.get("feature_names") != FEATURE_NAMES:
-            raise ModelError("model feature schema incompatible with this code version")
+            if meta.get("feature_schema_version") != FEATURE_SCHEMA_VERSION or meta.get("feature_names") != FEATURE_NAMES:
+                raise ModelError("model feature schema incompatible with this code version")
+            if not (d / "model.json").exists():
+                raise ModelError("Legacy pickle/joblib model rejected; retrain from recorded features and labels")
+            if (d / "model.json").stat().st_size > 16 * 1024 * 1024:
+                raise ModelError("Model is too large")
+            payload = (d / "model.json").read_bytes()
+            if hashlib.sha256(payload).hexdigest() != meta.get("model_sha256"):
+                raise ModelError("Model digest mismatch")
+            model = JsonTree(json.loads(payload))
+            if set(meta.get("train_range", {})) != set(FEATURE_NAMES):
+                raise ModelError("Missing training-domain metadata")
+            for bounds in meta["train_range"].values():
+                if len(bounds) != 2 or not np.isfinite(bounds).all() or bounds[0] > bounds[1]:
+                    raise ModelError("Invalid training-domain metadata")
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise ModelError(f"Cannot load model from {d}: {exc}") from exc
         return cls(model, meta)
 
     def tree_text(self) -> str:
-        return export_text(self.model, feature_names=FEATURE_NAMES)
+        return self.meta.get("tree_text", "") if isinstance(self.model, JsonTree) else export_text(self.model, feature_names=FEATURE_NAMES)
 
     def importances(self) -> dict[str, float]:
         return {k: round(float(v), 4) for k, v in zip(FEATURE_NAMES, self.model.feature_importances_)}
@@ -86,7 +104,7 @@ class CartSelector:
 
     def predict(self, f: dict) -> dict:
         t0 = time.perf_counter()
-        x = np.asarray([validate_features(f)])
+        x = np.asarray([validate_features(f)], dtype=np.float32)
         pred = str(self.model.predict(x)[0])
         leaf_frac = dict(zip(self.model.classes_.tolist(), self.model.predict_proba(x)[0].round(3).tolist()))
         path = self._decision_path(x)

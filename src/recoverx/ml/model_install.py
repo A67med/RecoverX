@@ -1,39 +1,28 @@
-"""Opt-in installation of a trusted model bundled with this source archive.
-
-The included joblib file is a Python pickle: never load models downloaded from
-unknown sources. Only the known repository-managed experiment model is used.
-"""
-from __future__ import annotations
-
-import json
-import shutil
+"""Evaluate the bundled synthetic records and activate a JSON CART model."""
 from pathlib import Path
 
 from ..config import PROJECT_ROOT, get_settings
 from ..exceptions import ModelError
-from .features import FEATURE_NAMES, FEATURE_SCHEMA_VERSION
+from ..forensic.storage import operation_lock
+from .evaluation import evaluate_records
+from .selector import CartSelector
 
 
 def bundled_model_dir() -> Path | None:
-    root = PROJECT_ROOT / "results" / "exp1" / "models"
-    dirs = sorted(p for p in root.glob("cart-*") if (p / "meta.json").is_file() and (p / "model.joblib").is_file())
-    return dirs[-1] if dirs else None
+    records = PROJECT_ROOT / "results" / "exp1"
+    return records if (records / "features.jsonl").is_file() else None
 
 
 def install_bundled_model() -> Path:
-    """Install a local, pre-trained CART model without requiring old absolute paths."""
-    source = bundled_model_dir()
-    if source is None:
-        raise ModelError("No bundled model found in results/exp1/models")
-    meta = json.loads((source / "meta.json").read_text())
-    if meta.get("feature_schema_version") != FEATURE_SCHEMA_VERSION or meta.get("feature_names") != FEATURE_NAMES:
-        raise ModelError("Bundled model metadata is incompatible with this version")
-    # Validate the exact, repository-bundled model before saving it as active.
-    from .selector import CartSelector
-    CartSelector.load(source)
-    target = get_settings().ensure().models_dir / source.name
-    if not target.exists():
-        shutil.copytree(source, target)
-    else:
+    records = bundled_model_dir()
+    if records is None:
+        raise ModelError("Bundled evaluation records are missing")
+    models = get_settings().ensure().models_dir
+    version = "cart-20261121-v030"
+    target = models / version
+    with operation_lock(models, ".model-install.lock"):
+        if not target.exists():
+            model, _ = evaluate_records(records, PROJECT_ROOT / "results/dataset_v1/manifest.json")
+            model.save(models, version)
         CartSelector.load(target)
     return target

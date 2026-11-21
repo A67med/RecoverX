@@ -13,15 +13,11 @@ from __future__ import annotations
 import json
 import platform
 import random
-import shutil
 import sys
 import time
 from pathlib import Path
 from statistics import median
 
-import numpy as np
-from sklearn.metrics import (accuracy_score, balanced_accuracy_score, classification_report,
-                             confusion_matrix)
 
 from .. import STRATEGIES, __version__
 from ..config import PROJECT_ROOT
@@ -30,8 +26,8 @@ from ..engines.engine_registry import all_capabilities
 from ..forensic.case_store import Case, create_case
 from ..forensic.filesystem_analyzer import analyze_image
 from ..ml.features import FEATURE_NAMES, extract_features
-from ..ml.labeling import ORDER, derive_label, load_objective
-from ..ml.selector import RULE_POLICY_TEXT, CartSelector, rule_select
+from ..ml.labeling import derive_label, load_objective
+from ..ml.selector import RULE_POLICY_TEXT
 from ..models import utcnow
 from ..recovery.orchestrator import run_recovery
 
@@ -73,6 +69,14 @@ class Experiment:
         self.ds = json.loads((dataset_dir / "manifest.json").read_text())
         self.objective = load_objective(OBJECTIVE_PATH)
         cfg = self.dir / "experiment_config.json"
+        if cfg.exists():
+            existing = json.loads(cfg.read_text())
+            if existing.get("recoverx_version") != __version__:
+                raise ValueError("Experiment belongs to a different pipeline version; use a new experiment folder")
+            if (Path(existing["dataset_dir"]).resolve() != dataset_dir.resolve()
+                    or existing["repeats"] != repeats or existing["order_seed"] != seed
+                    or existing["objective"] != self.objective):
+                raise ValueError("Resume settings differ from saved experiment configuration")
         if not cfg.exists():
             cfg.write_text(json.dumps({
                 "created_at": utcnow(), "recoverx_version": __version__, "dataset_dir": str(dataset_dir),
@@ -96,7 +100,7 @@ class Experiment:
     # ---------------- phase 1
     def phase1(self, progress=print):
         runs_path, feats_path = self.dir / "runs.jsonl", self.dir / "features.jsonl"
-        done = {(r["image_id"], r["method"], r["repeat"]) for r in read_jsonl(runs_path)}
+        done = {(r["image_id"], r["method"], r["repeat"]) for r in read_jsonl(runs_path) if r["status"] == "completed" and r["source_unchanged"]}
         feats_done = {r["image_id"] for r in read_jsonl(feats_path)}
         rng = random.Random(self.seed)
         for m in self.images():
@@ -126,7 +130,10 @@ class Experiment:
         obj = dict(self.objective)
         if tolerance is not None:
             obj["tolerance"] = tolerance
-        runs = [r for r in read_jsonl(self.dir / "runs.jsonl") if r["phase"] == "phase1"]
+        attempts = {(r["image_id"], r["method"], r["repeat"]): r
+                    for r in read_jsonl(self.dir / "runs.jsonl") if r["phase"] == "phase1"}
+        runs = [r for r in attempts.values() if r["status"] == "completed"
+                and r["source_unchanged"] and r["recall"] is not None]
         per: dict[str, dict] = {}
         for r in runs:
             d = per.setdefault(r["image_id"], {}).setdefault(r["strategy_used"], {"recalls": [], "times": []})
@@ -134,6 +141,8 @@ class Experiment:
             d["times"].append(r["total_s"])
         labels = {}
         for iid, d in per.items():
+            if set(d) != set(STRATEGIES) or any(len(v["times"]) < self.repeats for v in d.values()):
+                continue
             for s, v in d.items():
                 if len(set(v["recalls"])) > 1:
                     v["recall_nondeterministic"] = True
@@ -155,33 +164,14 @@ class Experiment:
         return ids, X, y
 
     def phase2(self, progress=print) -> dict:
-        labels = json.loads((self.dir / "labels.json").read_text())["labels"]
-        _, Xtr, ytr = self._xy(("train",), labels)
-        _, Xva, yva = self._xy(("val",), labels)
-        grid = self.objective.get("hyperparameter_grid", {"max_depth": [1, 2, 3, 4, 5], "min_samples_leaf": [1, 2, 4]})
-        results = []
-        for d in grid["max_depth"]:
-            for leaf in grid["min_samples_leaf"]:
-                m = CartSelector.train(Xtr, ytr, max_depth=d, min_samples_leaf=leaf, seed=0)
-                pred = m.model.predict(np.asarray(Xva))
-                results.append({"max_depth": d, "min_samples_leaf": leaf,
-                                "val_balanced_accuracy": float(balanced_accuracy_score(yva, pred)),
-                                "val_accuracy": float(accuracy_score(yva, pred))})
-        best = sorted(results, key=lambda r: (-r["val_balanced_accuracy"], r["max_depth"], -r["min_samples_leaf"]))[0]
-        _, Xall, yall = self._xy(("train", "val"), labels)
-        final = CartSelector.train(Xall, yall, max_depth=best["max_depth"], min_samples_leaf=best["min_samples_leaf"],
-                                   seed=0, extra_meta={"training_splits": ["train", "val"],
-                                                       "class_distribution": {c: yall.count(c) for c in sorted(set(yall))},
-                                                       "selected_on": "validation balanced accuracy",
-                                                       "experiment": str(self.dir)})
-        version = "cart-" + time.strftime("%Y%m%d-%H%M%S")
+        from ..ml.evaluation import evaluate_records
+        final, report = evaluate_records(self.dir, self.dataset_dir / "manifest.json",
+                                          self.objective.get("hyperparameter_grid"))
+        version = "cart-" + time.strftime("%Y%m%d-%H%M%S-") + str(time.time_ns() % 1000000000)
         mdir = final.save(self.dir / "models", version)
-        report = {"grid": results, "selected": best, "model_version": version, "model_dir": str(mdir),
-                  "train_class_distribution": {c: ytr.count(c) for c in sorted(set(ytr))},
-                  "val_class_distribution": {c: yva.count(c) for c in sorted(set(yva))},
-                  "tree": final.tree_text(), "feature_importance": final.importances()}
-        (self.dir / "training_report.json").write_text(json.dumps(report, indent=1))
-        progress(f"phase2 selected {best}; model {version}")
+        report.update(model_version=version, model_dir=str(mdir))
+        (self.dir / "training_report.json").write_text(json.dumps(report, indent=2))
+        progress(f"phase2 selected {report['selected']}; model {version}")
         return report
 
     # ---------------- phase 3
@@ -189,7 +179,7 @@ class Experiment:
         rep = json.loads((self.dir / "training_report.json").read_text())
         mdir = Path(rep["model_dir"])
         path = self.dir / "test_runs.jsonl"
-        done = {(r["image_id"], r["method"], r["repeat"]) for r in read_jsonl(path)}
+        done = {(r["image_id"], r["method"], r["repeat"]) for r in read_jsonl(path) if r["status"] == "completed" and r["source_unchanged"]}
         rng = random.Random(self.seed + 1)
         methods = ["tsk", "photorec", "combined", "rule", "cart"]
         for m in self.images(("test",)):
@@ -201,6 +191,6 @@ class Experiment:
                     if (m["image_id"], meth, rep_i) in done:
                         continue
                     case = case or self._case(m)
-                    run = run_recovery(case, meth, ground_truth=gt, model_dir=mdir if meth == "cart" else None)
+                    run = run_recovery(case, meth, ground_truth=gt, model_dir=mdir if meth == "cart" else None, conservative=False)
                     _append(path, _run_record(m, run, case, rep_i, k, "phase3"))
             progress(f"phase3 {m['image_id']}")

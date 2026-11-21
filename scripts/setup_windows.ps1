@@ -103,14 +103,6 @@ try {
         Extract-Tools $tsk 'tsk_recover.exe' (Join-Path $tools 'tsk')
     }
 
-    $photoExe = Join-Path $tools 'photorec\photorec_win.exe'
-    if (-not (Test-Path -LiteralPath $photoExe)) {
-        # Official stable PhotoRec 7.2 release; user can also supply the official ZIP offline.
-        $photo = Get-OfficialZip 'testdisk-7.2.win64.zip' `
-            'https://www.cgsecurity.org/testdisk-7.2.win64.zip'
-        Extract-Tools $photo 'photorec_win.exe' (Join-Path $tools 'photorec')
-    }
-
     foreach ($name in @('tsk_recover.exe','mmls.exe','fsstat.exe','fls.exe')) {
         if (-not (Test-Path -LiteralPath (Join-Path $tools "tsk\$name"))) {
             throw "Required TSK program missing: $name"
@@ -119,7 +111,17 @@ try {
 
     $venv = Join-Path $root '.venv'
     $pyLocal = Join-Path $venv 'Scripts\python.exe'
-    if (-not (Test-Path -LiteralPath $pyLocal)) {
+    $healthy = $false
+    if (Test-Path -LiteralPath $pyLocal) {
+        & $pyLocal -c 'import sys; sys.exit(0 if (3, 11) <= sys.version_info[:2] < (3, 14) and sys.maxsize > 2**32 else 1)'
+        $healthy = $LASTEXITCODE -eq 0
+    }
+    if (-not $healthy) {
+        if (Test-Path -LiteralPath $venv) {
+            $backup = '.venv.broken-' + [guid]::NewGuid().ToString('N')
+            Rename-Item -LiteralPath $venv -NewName $backup
+            Write-Host "Existing environment saved as $backup"
+        }
         Write-Host 'Creating the private Python environment...'
         & $pyExe @pyArgs -m venv $venv
         if ($LASTEXITCODE -ne 0) { throw 'Could not create Python environment' }
@@ -128,12 +130,9 @@ try {
     & $pyLocal -m pip install --disable-pip-version-check -r (Join-Path $root 'requirements-windows.txt')
     if ($LASTEXITCODE -ne 0) { throw 'Could not install required Python packages' }
 
-    $env:RECOVERX_HOME = Join-Path $env:LOCALAPPDATA 'RecoverX'
-    Write-Host 'Activating included CART model...'
-    & $pyLocal (Join-Path $root 'scripts\install_bundled_model.py')
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host 'Warning: CART model could not be activated. RecoverX will use the rule-based selector.'
-    }
+    $env:RECOVERX_HOME = Join-Path $env:LOCALAPPDATA "RecoverX"
+    & $pyLocal (Join-Path $root "scripts/install_bundled_model.py")
+    if ($LASTEXITCODE -ne 0) { Write-Warning "JSON CART activation failed. Rule-v1 remains available." }
 
     $desktop = [Environment]::GetFolderPath('Desktop')
     if ($desktop -and (Test-Path -LiteralPath $desktop)) {

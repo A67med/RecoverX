@@ -1,5 +1,4 @@
 """Offline safety and workflow tests for one-click additions."""
-from pathlib import Path
 
 import pytest
 
@@ -49,7 +48,7 @@ def test_guided_recovery_requires_exactly_one_source():
         quick.guided_recovery(image_path='/a')
 
 
-def test_guided_recovery_reuses_record_and_saves_analysis(tmp_path, monkeypatch):
+def test_guided_recovery_reuses_record_and_returns_analysis(tmp_path, monkeypatch):
     img = tmp_path / 'evidence.img'
     img.write_bytes(b'forensic bytes are immutable')
     cases = tmp_path / 'cases'
@@ -61,7 +60,7 @@ def test_guided_recovery_reuses_record_and_saves_analysis(tmp_path, monkeypatch)
         'features': {'n_deleted_named': 0}
     })
     rec, run = quick.guided_recovery(case_id=case.id, method='cart')
-    assert rec['analysis']['status'] == 'analysis_completed'
-    assert rec['analysis']['features']['n_deleted_named'] == 0
+    assert run['analysis']['status'] == 'analysis_completed'
+    assert run['features']['n_deleted_named'] == 0
     assert rec['image_sha256_initial'] == first['image_sha256_initial']
     assert run['run_id'] == 'R001'

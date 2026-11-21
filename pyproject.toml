@@ -1,10 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "recoverx"
 version = "0.3.0"
-description = "Evaluation of CART-based deleted-file recovery strategy selection over The Sleuth Kit and PhotoRec"
+description = "Auditable deleted-file recovery with TSK, PhotoRec and interpretable CART recommendations"
 requires-python = ">=3.11"
 readme = "README.md"
 license = { text = "MIT" }
+dependencies = [
+    "scikit-learn>=1.4,<2",
+    "numpy>=1.26,<3",
+    "pandas>=2.1,<4",
+    "scipy>=1.11,<2",
+    "Pillow>=13,<14",
+    "streamlit>=1.50,<2",
+    "plotly>=5.20,<8",
+    "reportlab>=4.1,<6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1", "pip-audit>=2.7,<3"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -13,3 +30,10 @@ where = ["src"]
 testpaths = ["tests"]
 pythonpath = ["src", "."]
 addopts = "-p no:cacheprovider -rs"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 110
+
+[tool.ruff.lint]
+select = ["F", "E9"]

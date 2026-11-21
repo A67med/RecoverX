@@ -34,12 +34,5 @@ def guided_recovery(*, image_path: str | None = None, case_id: str | None = None
     if method not in ('cart', 'rule', 'tsk', 'photorec', 'combined', 'smart'):
         raise ValueError('Invalid quick recovery method')
     run = run_recovery(case, method, model_dir=latest_model_dir(get_settings().models_dir),
-                       analyze=True, progress=progress)
-    # Keep the usual Forensic Analysis page in sync with a run from Quick Recovery.
-    if run.get('analysis'):
-        rec = case.load()
-        rec['analysis'] = {**run['analysis'], 'features': run['features'], 'at': run['finished_at']}
-        case.save(rec)
-        case.event('quick_analysis_saved', run_id=run['run_id'],
-                   status=run['analysis']['status'])
+                       analyze=True, progress=progress, conservative=method != 'smart')
     return case.load(), run

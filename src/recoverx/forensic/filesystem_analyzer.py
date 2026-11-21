@@ -45,6 +45,7 @@ class FsAnalysis:
     commands: list[dict] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     elapsed_s: float = 0.0
+    output_truncated: bool = False
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -83,12 +84,12 @@ def _parse_fls(stdout: str) -> tuple[list[DeletedEntry], int]:
     return deleted, allocated
 
 
-def analyze_image(image: str | Path, timeout: float = 300) -> FsAnalysis:
+def analyze_image(image: str | Path, timeout: float = 300, cancel_event=None) -> FsAnalysis:
     image = str(image)
     t0 = time.perf_counter()
     res = FsAnalysis(status="analysis_failed", image_size=Path(image).stat().st_size)
 
-    mm = run_command(["mmls", image], timeout=timeout)
+    mm = run_command(["mmls", image], timeout=timeout, cancel_event=cancel_event)
     res.commands.append(mm.to_dict(1500))
     if mm.returncode is None:
         res.status = "tool_unavailable"
@@ -101,7 +102,10 @@ def analyze_image(image: str | Path, timeout: float = 300) -> FsAnalysis:
         offsets.append(0)
 
     for off in offsets:
-        fs = run_command(["fsstat", "-o", str(off), image], timeout=timeout)
+        if cancel_event is not None and cancel_event.is_set():
+            res.errors.append("Analysis cancelled")
+            break
+        fs = run_command(["fsstat", "-o", str(off), image], timeout=timeout, cancel_event=cancel_event)
         res.commands.append(fs.to_dict(1500))
         if fs.ok:
             m = re.search(r"File System Type:\s*(.+)", fs.stdout)
@@ -114,9 +118,12 @@ def analyze_image(image: str | Path, timeout: float = 300) -> FsAnalysis:
         res.elapsed_s = time.perf_counter() - t0
         return res
 
-    fl = run_command(["fls", "-r", "-l", "-p", "-o", str(res.sector_offset), image], timeout=timeout)
+    fl = run_command(["fls", "-r", "-l", "-p", "-o", str(res.sector_offset), image], timeout=timeout, cancel_event=cancel_event)
     res.commands.append(fl.to_dict(1500))
-    if fl.ok:
+    res.output_truncated = fl.output_truncated
+    if fl.output_truncated:
+        res.errors.append("fls output exceeded capture limit; counts are incomplete and cannot guide ML")
+    if fl.ok and not fl.output_truncated:
         res.deleted_entries, res.allocated_files = _parse_fls(fl.stdout)
         res.status = "analysis_completed"
     else:

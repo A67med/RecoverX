@@ -38,6 +38,7 @@ class CommandResult:
     timed_out: bool = False
     cancelled: bool = False
     cwd: str | None = None
+    output_truncated: bool = False
 
     @property
     def ok(self) -> bool:
@@ -84,6 +85,7 @@ class EngineRun:
     files: list[RecoveredFile] = field(default_factory=list)
     error: str | None = None
     tool_version: str | None = None
+    warnings: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)

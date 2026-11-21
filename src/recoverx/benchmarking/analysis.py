@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
-from statistics import mean, median
+from statistics import median
 
 import numpy as np
 import pandas as pd
@@ -66,9 +66,19 @@ def analyze_experiment(exp_dir: Path) -> dict:
     exp_dir = Path(exp_dir)
     labels_doc = json.loads((exp_dir / "labels.json").read_text())
     labels = labels_doc["labels"]
-    runs = read_jsonl(exp_dir / "test_runs.jsonl")
+    raw_runs = read_jsonl(exp_dir / "test_runs.jsonl")
+    runs = list({(r["image_id"], r["method"], r["repeat"]): r for r in raw_runs}.values())
     if not runs:
         return {"headline": "No test runs recorded yet — results not measured."}
+    if any(r["status"] != "completed" or not r["source_unchanged"] or r["recall"] is None for r in runs):
+        raise ValueError("Cannot publish benchmark statistics from failed or integrity-invalid runs; resume incomplete trials")
+    by_image = defaultdict(set)
+    for run in runs:
+        by_image[run["image_id"]].add(run["method"])
+    if any(methods != set(METHODS) for methods in by_image.values()):
+        raise ValueError("Incomplete benchmark: every test image needs all five methods")
+    if any(image_id not in labels for image_id in by_image):
+        raise ValueError("Missing oracle labels for test images")
     t = per_image_table(runs)
     t.to_csv(exp_dir / "per_image_results.csv", index=False)
     piv_time = t.pivot(index="image_id", columns="method", values="median_time_s")
@@ -147,6 +157,7 @@ def analyze_experiment(exp_dir: Path) -> dict:
     exp = Experiment.__new__(Experiment)
     exp.dir = exp_dir
     exp.objective = labels_doc["objective"]
+    exp.repeats = json.loads((exp_dir / "experiment_config.json").read_text())["repeats"]
     sens = {}
     for tol_s in [0.0, 0.05, 0.10, 0.20]:
         lab = exp.derive_labels(tolerance=tol_s, write=False)

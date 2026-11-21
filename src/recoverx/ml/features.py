@@ -2,6 +2,8 @@
 (see FEATURE_DOCS); none uses ground truth, scenario labels or recovery outcomes."""
 from __future__ import annotations
 
+import math
+
 from ..forensic.filesystem_analyzer import FsAnalysis
 
 FEATURE_SCHEMA_VERSION = "1"
@@ -49,4 +51,7 @@ def validate_features(f: dict) -> list[float]:
     missing = [k for k in FEATURE_NAMES if k not in f]
     if missing:
         raise ValueError(f"feature schema mismatch, missing: {missing}")
-    return [float(f[k]) for k in FEATURE_NAMES]
+    values = [float(f[k]) for k in FEATURE_NAMES]
+    if not all(math.isfinite(v) and v >= 0 for v in values):
+        raise ValueError("features must be finite nonnegative values")
+    return values

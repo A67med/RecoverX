@@ -34,7 +34,9 @@ def derive_label(per_strategy: dict[str, dict], objective: dict | None = None) -
     best = max(qs.values())
     eligible = [s for s in ORDER if s in qs and qs[s] >= best - obj["tolerance"] - 1e-12]
     eligible.sort(key=lambda s: (ts[s], ORDER.index(s)))
-    label = eligible[0]
+    fastest = ts[eligible[0]]
+    tied = [s for s in eligible if ts[s] <= fastest + obj["tie_epsilon_s"]]
+    label = min(tied, key=ORDER.index)
     tie = any(s != label and abs(ts[s] - ts[label]) <= obj["tie_epsilon_s"] for s in eligible)
     return {"label": label, "eligible": eligible, "best_recall": best, "tie": tie,
             "fallback_nothing_recoverable": best == 0.0}

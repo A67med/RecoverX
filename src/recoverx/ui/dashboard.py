@@ -14,6 +14,12 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from recoverx.quick import guided_recovery
+from recoverx.ml.model_install import bundled_model_dir, install_bundled_model
+from recoverx.acquisition import candidate_devices, capture_device, AcquisitionError
+from recoverx.reporting.pdf_report import generate_case_pdf
+from recoverx.demo import create_demo_case
+from recoverx.tool_paths import resolve_tool
 from recoverx import STRATEGIES, __version__
 from recoverx.config import PROJECT_ROOT, get_settings
 from recoverx.diagnostics import run_diagnostics
@@ -21,49 +27,46 @@ from recoverx.exceptions import RecoverXError
 from recoverx.forensic.case_store import build_manifest, create_case, list_cases, open_case, verify_case_evidence
 from recoverx.forensic.filesystem_analyzer import analyze_image
 from recoverx.forensic.hashing import sha256_file
-from recoverx.forensic.image_validator import safe_identifier, safe_join
 from recoverx.ml.features import FEATURE_DOCS, extract_features
-from recoverx.quick import guided_recovery
-from recoverx.acquisition import candidate_devices, capture_device, AcquisitionError
-from recoverx.ml.model_install import bundled_model_dir, install_bundled_model
 from recoverx.ml.selector import RULE_POLICY_TEXT, CartSelector, latest_model_dir
 from recoverx.models import utcnow
-from recoverx.reporting.pdf_report import generate_case_pdf
-from recoverx.tool_paths import resolve_tool
+from recoverx.recovery.jobs import current_job, start_recovery
+from recoverx.recovery.orchestrator import validate_ground_truth
+from recoverx.reporting.exports import case_report, csv_inventory
+from recoverx.forensic.storage import operation_lock
+from recoverx.forensic.image_validator import safe_identifier, safe_join
 
-NAVY, TEAL, SLATE = "#14213d", "#2a9d8f", "#5c677d"
+NAVY, TEAL, SLATE = "#6ca8ff", "#31d5bc", "#9aaec9"
 PAGES = ["Quick Recovery", "Overview", "Case Management", "Forensic Analysis", "Intelligent Recovery", "Recovered Files",
          "Model Training", "Benchmark Laboratory", "Evidence & Audit", "Settings & Diagnostics"]
 
-# Quick Recovery offers explicit engine choices without restoring the sidebar.
-# "smart" is the Windows default and preserves the existing automatic fallback.
-QUICK_RECOVERY_METHODS = {
-    'Smart Recovery (CART + fallback)': 'smart',
-    'TSK only': 'tsk',
-    'PhotoRec only': 'photorec',
-    'TSK + PhotoRec (both)': 'combined',
-    'Automatic (CART only)': 'cart',
-    'Automatic (rule-v1 only)': 'rule',
-}
-QUICK_RECOVERY_METHOD_HELP = {
-    'smart': 'CART chooses the initial strategy (rule-v1 if unavailable). If a single engine fails or finds no files, the other engine is tried.',
-    'tsk': 'Run The Sleuth Kit only. PhotoRec will not run automatically.',
-    'photorec': 'Run PhotoRec only. TSK recovery will not run automatically.',
-    'combined': 'Run both TSK and PhotoRec, then combine results without changing the source image.',
-    'cart': 'Use CART to choose a strategy (rule-v1 if unavailable), without the additional Smart Recovery fallback.',
-    'rule': 'Use the rule-v1 selector to choose a strategy, without the additional Smart Recovery fallback.',
-}
-
-CSS = f"""
+CSS = """
 <style>
-[data-testid="stSidebar"] {{ background: {NAVY}; }}
-[data-testid="stSidebar"] * {{ color: #e8ecf3 !important; }}
-.block-container {{ padding-top: 1.6rem; max-width: 1250px; }}
-h1, h2, h3 {{ color: {NAVY}; letter-spacing: -0.01em; }}
-[data-testid="stMetric"] {{ background: #f6f8fb; border: 1px solid #e3e8ef; border-radius: 8px; padding: 10px 14px; }}
-.rx-badge {{ display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.78rem; font-weight:600; }}
-.rx-ok {{ background:#e3f4f1; color:#1d6f65; }} .rx-bad {{ background:#fdecea; color:#9b2c2c; }}
-.rx-warn {{ background:#fff4e0; color:#8a5a00; }} .rx-muted {{ color:{SLATE}; font-size:0.85rem; }}
+.stApp { background: radial-gradient(ellipse at 100% 0%, #142b40 0%, #080f1b 48%); }
+[data-testid="stSidebar"] { background: #0b1422; border-right: 1px solid #203148; }
+.block-container { padding-top: 2.3rem; padding-bottom: 4rem; max-width: 1450px; }
+h1,h2,h3 { letter-spacing: -.035em; font-weight: 650; }
+h1 { font-size: 2.3rem !important; }
+[data-testid="stMetric"] { background: linear-gradient(135deg,#142236,#101b2c); border: 1px solid #263a51;
+  border-radius: 14px; padding: 18px 20px; min-height: 114px; }
+[data-testid="stMetricLabel"] { color: #9aaec9; font-size: .8rem; }
+[data-testid="stMetricValue"] { font-variant-numeric: tabular-nums; }
+[data-testid="stDataFrame"] { border-radius: 12px; overflow: hidden; border: 1px solid #263a51; }
+[data-testid="stForm"] { background: #101b2bcc; border: 1px solid #263a51; border-radius: 16px; }
+button[kind="primary"] { color:#06211d; font-weight:700; border-radius:9px; }
+.rx-brand { display:flex; align-items:center; gap:12px; font-size:24px; font-weight:750; letter-spacing:-1px; }
+.rx-logo { display:grid; place-items:center; width:40px; height:40px; border:1px solid #31d5bc;
+  color:#31d5bc; background:#123231; border-radius:12px; font-size:21px; }
+.rx-eyebrow { color:#31d5bc; text-transform:uppercase; letter-spacing:.2em; font-size:.7rem; font-weight:700; }
+.rx-hero { border:1px solid #2b435c; border-radius:18px; padding:26px 30px; margin:0 0 26px;
+ background:linear-gradient(115deg,#132a3d,#112031 65%,#153f40); }
+.rx-hero h2 { margin:8px 0; color:#edf6ff; font-size:1.65rem; }
+.rx-hero p { color:#a9bdd2; margin:0; max-width:800px; }
+.rx-badge { display:inline-block; padding:4px 9px; border-radius:6px; font-size:.72rem; font-weight:650; }
+.rx-ok { background:#123e38; color:#68e9ca; } .rx-bad { background:#422931; color:#ffa6b1; }
+.rx-warn { background:#3c3322; color:#f0ca80; } .rx-muted { color:#9aaec9; font-size:.8rem; }
+[data-testid="stSidebar"] label { line-height:1.8; }
+@media(max-width:700px) { .block-container { padding:1rem; } .rx-hero { padding:18px; } }
 </style>
 """
 
@@ -81,21 +84,13 @@ def not_measured(msg="Not yet measured"):
 # ------------------------------------------------------------------ data access
 def experiments() -> list[Path]:
     d = get_settings().ensure().experiments_dir
-    live = sorted([p for p in d.glob("*") if (p / "experiment_config.json").exists()], reverse=True)
-    # The supplied repository includes a read-only historical snapshot. Show
-    # its real recorded metrics without pretending the original dataset exists.
-    archive = PROJECT_ROOT / 'results' / 'exp1'
-    if (archive / 'experiment_config.json').exists():
-        live.append(archive)
-    return live
+    return sorted([p for p in d.glob("*") if (p / "experiment_config.json").exists()], reverse=True)
 
 
-def archived_experiment(p: Path) -> bool:
-    return p.resolve().is_relative_to((PROJECT_ROOT / 'results').resolve())
-
-
-def experiment_label(p: Path) -> str:
-    return f"{p.name}  {'(historical read-only results)' if archived_experiment(p) else '(workspace)'}"
+def include_historical_experiment(exps: list[Path]) -> None:
+    archive = PROJECT_ROOT / "results" / "exp1"
+    if (archive / "experiment_config.json").is_file() and st.checkbox("Include historical results"):
+        exps.append(archive)
 
 
 def read_json(p: Path):
@@ -124,7 +119,11 @@ def case_picker(key: str):
 
 # ------------------------------------------------------------------ pages
 def page_overview():
-    st.title("Overview")
+    st.title("Investigation overview")
+    st.markdown('<div class="rx-hero"><div class="rx-eyebrow">RECOVERX / FORENSIC OPERATIONS</div>'
+                '<h2>Recover with evidence. Report with confidence.</h2>'
+                '<p>Metadata recovery, signature carving and interpretable strategy selection in one auditable workspace. '
+                'Every count below comes from your recorded cases.</p></div>', unsafe_allow_html=True)
     cases = list_cases()
     runs = [r for c in cases for r in c.get("runs", [])]
     outputs = sum(r["metrics"]["outputs"] for r in runs)
@@ -154,22 +153,32 @@ def page_overview():
         for e in d["engines"]:
             st.markdown(f"{badge(e['available'])} **{e['engine']}** {e['version'] or ''}", unsafe_allow_html=True)
         md = active_model_dir()
-        st.markdown(f"{badge(bool(md), 'Installed', 'None')} **CART model** {md.name if md else '— rule-v1 fallback in use'}",
+        st.markdown(f"{badge(bool(md), 'Installed', 'None')} **CART model** {md.name if md else '— conservative combined recovery available'}",
                     unsafe_allow_html=True)
-        if not md and bundled_model_dir() and st.button('Install included CART model'):
-            try:
-                installed = install_bundled_model()
-                st.success(f'Installed {installed.name}. CART is available for new runs.')
-                st.rerun()
-            except RecoverXError as e:
-                st.error(str(e))
         exps = experiments()
         if exps and (exps[0] / "analysis.json").exists():
-            st.markdown(f"**Benchmark record** `{experiment_label(exps[0])}`")
+            st.markdown(f"**Latest benchmark** `{exps[0].name}`")
             st.caption(read_json(exps[0] / "analysis.json")["headline"])
         else:
             st.markdown(badge(None) + " **Benchmark**", unsafe_allow_html=True)
 
+
+QUICK_RECOVERY_METHODS = {
+    'Smart Recovery (CART + fallback)': 'smart',
+    'TSK only': 'tsk',
+    'PhotoRec only': 'photorec',
+    'TSK + PhotoRec (both)': 'combined',
+    'Conservative (CART advice)': 'cart',
+    'Conservative (rule-v1 advice)': 'rule',
+}
+QUICK_RECOVERY_METHOD_HELP = {
+    'smart': 'CART chooses the initial strategy (rule-v1 if unavailable). If a single engine fails or finds no files, the other engine is tried.',
+    'tsk': 'Run The Sleuth Kit only. PhotoRec will not run automatically.',
+    'photorec': 'Run PhotoRec only. TSK recovery will not run automatically.',
+    'combined': 'Run both TSK and PhotoRec, then combine results without changing the source image.',
+    'cart': 'CART advises the conservative strategy, which runs both engines.',
+    'rule': 'Rule-v1 advises the conservative strategy, which runs both engines.',
+}
 
 def local_file_picker() -> str | None:
     """Use an OS-native file picker on the local desktop (Windows or Kali)."""
@@ -236,6 +245,7 @@ def page_quick():
                     try:
                         with st.spinner('Creating a byte-for-byte image on a separate disk. Do not disconnect the source…'):
                             img = capture_device(labels[chosen])
+                        st.session_state.pop('quick_last_case_id', None)
                         st.session_state['quick_img'] = str(img)
                         st.success(f'Image captured: {img}')
                     except AcquisitionError as e:
@@ -244,11 +254,12 @@ def page_quick():
                 st.caption('Press Refresh to discover unmounted non-system devices. '
                            'Mounted devices and disks containing mounted partitions are excluded.')
     if os.name == 'nt':
-        missing = [tool for tool in ('tsk_recover', 'fls', 'fsstat', 'mmls', 'photorec')
+        missing = [tool for tool in ('tsk_recover', 'fls', 'fsstat', 'mmls')
                    if not resolve_tool(tool)]
         if missing:
             st.error('Recovery tools missing: ' + ', '.join(missing)
                      + '. Run SETUP_WINDOWS.cmd from the RecoverX folder first.')
+        st.caption('PhotoRec uses TestDisk installed in the default non-root WSL distribution.')
         st.info('Windows version works with RAW disk images (.img/.dd/.raw/.bin). '
                 'It does not directly capture a physical USB or system disk. '
                 'Create the image with a trusted disk-imaging tool first, then select it here.')
@@ -268,12 +279,13 @@ def page_quick():
             if st.button('Browse…', help='Opens the local file picker'):
                 chosen = local_file_picker()
                 if chosen:
+                    st.session_state.pop('quick_last_case_id', None)
                     st.session_state['quick_img'] = chosen
                     st.rerun()
                 else:
                     st.info('File picker cancelled or unavailable. Paste the full disk image path.')
         with c1:
-            image_path = st.text_input('Disk image path (.img/.dd/.raw)', key='quick_img',
+            image_path = st.text_input('Disk image path (.img/.dd/.raw)', key='quick_img', on_change=lambda: st.session_state.pop('quick_last_case_id', None),
                                        placeholder='C:\\Users\\YourName\\Downloads\\evidence.img' if os.name == 'nt' else '/home/kali/Downloads/evidence.img')
         label = st.text_input('Case label', value='Quick Recovery', key='quick_label')
         examiner = st.text_input('Examiner (optional)', key='quick_examiner')
@@ -293,6 +305,9 @@ def page_quick():
     st.caption(QUICK_RECOVERY_METHOD_HELP[method])
     if method in ('smart', 'cart') and not active_model_dir():
         st.info('No active CART model. The selector will use rule-v1 instead.')
+        if bundled_model_dir() and st.button('Install CART from bundled evaluation records'):
+            install_bundled_model()
+            st.rerun()
     st.warning('The run may take time on large disks. Do not close this browser tab during recovery. '
                'Source media and disk image remain unchanged; output is stored separately.')
     if st.button('Analyze + recover', type='primary',
@@ -303,14 +318,15 @@ def page_quick():
                 rec, run = guided_recovery(image_path=image_path if source == 'New disk image' else None,
                                            case_id=case_id, authorized=authorized,
                                            examiner=examiner, label=label,
-                                           method=method, progress=lambda message: st.write(message))
+                                           method=method, progress=lambda event: st.write(event.get('detail', event['stage'])))
                 status.update(label=f"Recovery {run['status']}",
                               state='complete' if run['status'] == 'completed' else 'error')
-                st.session_state['quick_last_case_id'] = rec['case_id']
+                if source == 'New disk image':
+                    st.session_state['quick_last_case_id'] = rec['case_id']
             except (RecoverXError, OSError, ValueError) as e:
                 st.error(f'Quick Recovery could not finish: {e}')
                 status.update(label='Quick Recovery stopped', state='error')
-    recent_id = st.session_state.get('quick_last_case_id') or case_id
+    recent_id = case_id or st.session_state.get('quick_last_case_id')
     if recent_id:
         try:
             case = open_case(recent_id)
@@ -323,6 +339,12 @@ def page_quick():
                 c[1].metric('Total outputs', run['metrics']['outputs'])
                 c[2].metric('Distinct contents', len(run['canonical_files']))
                 c[3].metric('Image unchanged', 'Yes' if run['source_unchanged'] else 'NO')
+                if run.get('error'):
+                    st.error(run['error'])
+                if run['selection'].get('engines_attempted'):
+                    st.caption('Engines attempted in order: ' + ' → '.join(run['selection']['engines_attempted']))
+                if run['selection'].get('engine_fallback'):
+                    st.warning(run['selection']['engine_fallback'])
                 if run['selection'].get('fallback'):
                     st.warning(run['selection']['fallback'])
                 st.caption('Recovered outputs are not proof of exact reconstruction unless the original '
@@ -340,7 +362,7 @@ def page_quick():
                                                 'size': f['size'], 'sha256': f['sha256'],
                                                 'verification': f['integrity_state']}
                                                for _, f in unique]),
-                                 hide_index=True, width='stretch')
+                                 hide_index=True, use_container_width=True)
                     st.subheader('Save a recovered file')
                     st.warning('Recovered files may contain malicious data. Download only files you trust; '
                                'RecoverX never opens or executes their contents.')
@@ -371,7 +393,6 @@ def page_cases():
         st.caption("Creates a 48 MiB synthetic disk image with deleted files, a ground-truth manifest "
                    "and a new case. Needs mkfs.vfat, mtools and Sleuth Kit; no real device is modified.")
         if st.button("Generate demo image and create case"):
-            from recoverx.demo import create_demo_case
             with st.spinner('Generating and validating synthetic evidence…'):
                 try:
                     demo_case, demo_rec = create_demo_case()
@@ -395,7 +416,7 @@ def page_cases():
                 try:
                     case, rec = create_case(path.strip(), notes=notes, examiner=examiner, label=label)
                     st.success(f"Case {rec['case_id']} created · SHA-256 {rec['image_sha256_initial']}")
-                except RecoverXError as e:
+                except (RecoverXError, OSError, ValueError) as e:
                     st.error(str(e))
     st.subheader("Cases")
     case, rec = case_picker("cm_case")
@@ -410,8 +431,6 @@ def page_cases():
         st.markdown(f"**Notes:** {rec['notes']}")
     st.download_button("Export evidence manifest (JSON)", json.dumps(build_manifest(case), indent=2),
                        file_name=f"{rec['case_id']}_manifest.json", mime="application/json")
-    st.download_button("Export forensic case report (PDF)", generate_case_pdf(case),
-                       file_name=f"{rec['case_id']}_report.pdf", mime="application/pdf")
 
 
 def page_analysis():
@@ -421,18 +440,16 @@ def page_analysis():
         return
     if st.button("Run pre-recovery analysis (mmls / fsstat / fls, read-only)", type="primary"):
         try:
-            with st.spinner("Checking image integrity and running TSK inspection…"):
-                verify_case_evidence(case, operation="pre_recovery_analysis")
+            with operation_lock(case.dir), st.spinner("Running TSK inspection…"):
+                verify_case_evidence(case, operation="analysis")
                 a = analyze_image(rec["image_path"])
-                verify_case_evidence(case, operation="post_recovery_analysis")
                 rec = case.load()
                 rec["analysis"] = {**a.to_dict(), "features": extract_features(a), "at": utcnow()}
                 rec["status"] = a.status
                 case.save(rec)
                 case.event("analysis", status=a.status, fs_type=a.fs_type, deleted=len(a.deleted_entries))
-        except RecoverXError as e:
-            st.error(f"Analysis blocked: {e}")
-            return
+        except (RecoverXError, OSError, ValueError) as exc:
+            st.error(str(exc))
     a = rec.get("analysis")
     if not a:
         not_measured("Analysis not run for this case")
@@ -458,77 +475,118 @@ def page_analysis():
 
 
 def page_recovery():
-    st.title("Intelligent Recovery")
+    st.title("Recovery workspace")
+    st.caption("01 Select evidence  /  02 Configure strategy  /  03 Recover  /  04 Verify & review")
     case, rec = case_picker("ir_case")
     if not case:
         return
     md = active_model_dir()
-    st.markdown(f"Active CART model: **{md.name if md else 'none'}**"
-                + ("" if md else " — CART requests will transparently fall back to rule-v1."))
+    with st.container(border=True):
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Evidence size", f"{rec['image_size'] / 2**20:,.1f} MiB")
+        c2.metric("Registered", "SHA-256" if rec["image_sha256_initial"] else "No initial digest")
+        c3.metric("CART model", "Installed" if md else "Not installed")
+        st.text(Path(rec["image_path"]).name)
     mode = st.radio("Strategy selection", ["CART (automatic)", "Rule-based baseline (rule-v1)",
                                             "Fixed strategy", "Manual override"], horizontal=True)
     method = {"CART (automatic)": "cart", "Rule-based baseline (rule-v1)": "rule"}.get(mode)
     if mode == "Fixed strategy":
-        method = st.selectbox("Fixed strategy", STRATEGIES)
+        method = st.selectbox("Fixed strategy", STRATEGIES, index=2)
     elif mode == "Manual override":
-        method = "manual:" + st.selectbox("Strategy chosen by examiner", STRATEGIES)
-    analyze_layout = st.checkbox("Inspect filesystem and partition offset before recovery", value=True,
-                                 help="Recommended for interactive use, especially partitioned images. "
-                                      "Benchmarks retain their original fixed-method timing configuration.")
-    gt_path = st.text_input("Optional ground-truth manifest (JSON with deleted/allocated SHA-256 lists)",
-                            value=rec.get('demo_ground_truth_path', ''))
-    if gt_path.strip() and gt_path.strip() == rec.get('demo_ground_truth_path'):
-        st.caption('Synthetic demo ground truth selected automatically; real evidence normally has no ground truth.')
-    st.caption('Partitioned images: TSK supports sector offsets from analysis. PhotoRec uses its own detection; '
-               'partition handling may require separate validation.')
-    st.warning("Recovery runs real tools against the image (read-only) and may take minutes on large images. "
-               "Output goes to a new run directory inside the case folder.")
-    if st.button("Start recovery", type="primary"):
-        gt = None
-        if gt_path.strip():
-            try:
-                gt = json.loads(Path(gt_path.strip()).read_text())
-            except (OSError, json.JSONDecodeError) as e:
-                st.error(f"Ground truth not loaded: {e}")
-                return
-        from recoverx.recovery.orchestrator import run_recovery
-        with st.status("Running recovery…", expanded=True) as s:
-            try:
-                run = run_recovery(case, method, ground_truth=gt, model_dir=md,
-                                   analyze=analyze_layout, progress=lambda msg: st.write(msg))
-                s.update(label=f"Run {run['run_id']} — {run['status']}",
-                         state="complete" if run["status"] == "completed" else "error")
-            except RecoverXError as e:
-                st.error(f"Recovery blocked: {e}")
-                s.update(label='Recovery blocked safely', state='error')
-                return
-        rec = case.load()
+        method = "manual:" + st.selectbox("Strategy chosen by examiner", STRATEGIES, index=2)
+    if method in ("cart", "rule"):
+        st.info("Preservation mode: the selector explains its recommendation; both engines run sequentially. "
+                "A model prediction does not prove that another engine has nothing to recover.")
+    elif method not in ("combined", "manual:combined"):
+        st.warning("Single-engine selection can miss files that the other engine could recover.")
+    with st.expander("Verification & runtime settings"):
+        gt_path = st.text_input("Optional ground-truth manifest (JSON with deleted/allocated SHA-256 lists)")
+        c1, c2 = st.columns(2)
+        tsk_timeout = c1.number_input("TSK timeout (seconds)", min_value=1, max_value=86400, value=600)
+        photorec_timeout = c2.number_input("PhotoRec timeout (seconds)", min_value=1, max_value=86400, value=1800)
+    job = current_job()
+    active = bool(job and not job.done.is_set())
+    if st.button("Start recovery", type="primary", disabled=active, icon=":material/play_arrow:"):
+        try:
+            gt = None
+            if gt_path.strip():
+                path = Path(gt_path.strip()).expanduser()
+                if not path.is_file() or path.stat().st_size > 5 * 1024 * 1024:
+                    raise ValueError("Ground truth must be a JSON file smaller than 5 MiB")
+                gt = json.loads(path.read_text())
+                validate_ground_truth(gt)
+            start_recovery(case, method, ground_truth=gt, model_dir=md,
+                           timeouts={"tsk": tsk_timeout, "photorec": photorec_timeout})
+            st.rerun()
+        except (RecoverXError, OSError, ValueError) as exc:
+            st.error(str(exc))
+    if active and job.case_id != case.id:
+        st.warning(f"Recovery is active for case {job.case_id}. Select that case to monitor or cancel it.")
+    _live_recovery(case.id)
+
+
+@st.fragment(run_every="1s")
+def _live_recovery(case_id):
+    case = open_case(case_id)
+    job = current_job()
+    if job and job.case_id == case_id:
+        snapshot = job.snapshot()
+        if not snapshot["done"]:
+            events = snapshot["events"]
+            stage = events[-1].get("detail") or events[-1]["stage"] if events else "Starting worker"
+            st.info(f"In progress · {stage}")
+            st.caption("Stages and completed-engine file counts are measured. These tools do not provide a reliable percentage. "
+                       "Cancellation waits for the current hash/inventory operation to finish; active tool processes are stopped.")
+            completed = [e for e in events if e["stage"] == "engine_finished"]
+            if completed:
+                st.dataframe(pd.DataFrame(completed)[["engine", "engine_status", "files"]], hide_index=True)
+            if st.button("Cancel safely", disabled=snapshot["cancelling"], icon=":material/stop_circle:"):
+                job.cancel.set()
+                st.rerun(scope="fragment")
+            with st.expander("Live operation log"):
+                st.json(events)
+            return
+        if st.session_state.get("completed_job") != id(job):
+            st.session_state["completed_job"] = id(job)
+            st.rerun()
+        if snapshot["error"]:
+            st.error(snapshot["error"])
+    rec = case.load()
+    checkpoint = read_json(case.dir / "active_run.json")
+    if checkpoint and checkpoint.get("stage") != "run_finished" and not (job and job.case_id == case_id and not job.done.is_set()):
+        st.warning("An unfinished operation checkpoint exists. A worker may have stopped or may be running in another process. "
+                   "Partial output is preserved; a new run will use a fresh directory and must acquire the case lock.")
     if not rec["runs"]:
         not_measured("No recovery runs for this case")
         return
     run = rec["runs"][-1]
     sel = run["selection"]
-    st.subheader(f"Latest run · {run['run_id']}")
+    st.subheader("Latest operation")
+    (st.success if run["status"] == "completed" else st.warning)(f"{run['run_id']} · {run['status']}")
+    if run.get("error"):
+        st.error(run["error"])
     c = st.columns(4)
-    c[0].metric("Method", sel["method"])
-    c[1].metric("Strategy actually used", sel["strategy_used"])
-    c[2].metric("Total time", f"{run['timing']['total_s']:.3f}s")
-    c[3].metric("Source hash unchanged", "yes" if run["source_unchanged"] else "NO")
-    if sel.get("fallback"):
-        st.warning(sel["fallback"])
-    if sel["method"].startswith("manual:"):
-        st.info(f"Manual override. Rule-v1 would have recommended: **{sel.get('recommended')}**")
-    st.markdown(f"**Rationale / decision path:** {sel['rationale']}")
-    if run.get("features"):
-        with st.expander("Pre-recovery features used"):
+    c[0].metric("Applied strategy", sel["strategy_used"] or "Blocked")
+    c[1].metric("Output files", run["metrics"]["outputs"])
+    c[2].metric("Elapsed", f"{run['timing']['total_s']:.2f}s")
+    c[3].metric("Evidence hash", "Unchanged" if run["source_unchanged"] else "CHECK FAILED")
+    st.write("Recommendation:", sel.get("recommended") or "Examiner-selected", "·", sel["rationale"])
+    for warning in [sel.get("fallback"), sel.get("safety_override"), *run.get("warnings", [])]:
+        if warning:
+            st.warning(warning)
+    if not run["source_unchanged"]:
+        st.error("Evidence integrity verification failed. Do not treat this run as verified evidence.")
+    with st.expander("Selection inputs and measured engine results"):
+        if run.get("features"):
             st.dataframe(pd.DataFrame([run["features"]]).T.rename(columns={0: "value"}))
-    st.dataframe(pd.DataFrame([{"engine": e["engine"], "status": e["status"], "version": e["tool_version"],
-                                "files": len(e["files"]), "elapsed_s": e["elapsed_s"], "error": e["error"]}
-                               for e in run["engine_runs"]]), hide_index=True)
-    if run['status'] == 'evidence_changed':
-        st.error('The source image changed during recovery. Do not use these outputs without a new evidence review.')
-    st.json(run["metrics"])
-    st.bar_chart(pd.Series({k: v for k, v in run["timing"].items() if k != "total_s"}, name="seconds"))
+        if sel.get("leaf_class_fractions"):
+            st.write("Training-leaf class fractions (not confidence or recovery probability)")
+            st.json(sel["leaf_class_fractions"])
+        st.dataframe(pd.DataFrame([{"engine": e["engine"], "status": e["status"], "version": e["tool_version"],
+                                    "files": len(e["files"]), "seconds": e["elapsed_s"], "error": e["error"]}
+                                   for e in run["engine_runs"]]), hide_index=True)
+        st.json(run["metrics"])
+    st.caption("Open Recovered Files for the inventory, or Evidence & Audit for reports and hashes.")
 
 
 def page_files():
@@ -555,8 +613,13 @@ def page_files():
     f = df[df.engine.isin(eng) & df.integrity_state.isin(states)]
     if q:
         f = f[f.apply(lambda r: q.lower() in f"{r.original_name} {r.recovered_name} {r.sha256}".lower(), axis=1)]
+    totals = st.columns(3)
+    totals[0].metric("Matching outputs", len(f))
+    totals[1].metric("Content size", f"{f['size'].sum() / 2**20:,.2f} MiB")
+    totals[2].metric("Exact hash matches", int((f.integrity_state == "verified_exact_match").sum()))
     st.dataframe(f, hide_index=True, width="stretch")
-    st.download_button("Export CSV", f.to_csv(index=False), file_name=f"{rid}_files.csv", mime="text/csv")
+    st.caption("A file type or original name is a metadata hint. Only matching supplied ground truth earns an exact-match label.")
+    st.download_button("Export CSV", csv_inventory(f.to_dict("records")), file_name=f"{rid}_files.csv", mime="text/csv")
     st.subheader("Distinct contents (deduplicated by SHA-256, provenance kept)")
     st.dataframe(pd.DataFrame(run["canonical_files"]), hide_index=True, width="stretch")
 
@@ -564,13 +627,11 @@ def page_files():
 def page_training():
     st.title("Model Training")
     exps = experiments()
+    include_historical_experiment(exps)
     if not exps:
         not_measured("No experiment with labels yet — run Benchmark Laboratory phase 1")
         return
-    exp = st.selectbox("Experiment", exps, format_func=experiment_label)
-    if archived_experiment(exp):
-        st.info('Historical archived data: original experiment paths may refer to another machine. '
-                'Results are read-only; generate a new local dataset to retrain or reproduce.')
+    exp = st.selectbox("Experiment", exps, format_func=lambda p: f"{p.name} (historical, read-only)" if p.parent == PROJECT_ROOT / "results" else p.name)
     labels = read_json(exp / "labels.json")
     rep = read_json(exp / "training_report.json")
     st.subheader("Feature definitions (all pre-recovery)")
@@ -600,52 +661,49 @@ def page_training():
                         width="stretch")
     st.subheader("Actions")
     c1, c2 = st.columns(2)
-    if c1.button("Retrain (phase 2: train/val only)", disabled=archived_experiment(exp)):
+    if c1.button("Retrain (phase 2: train/val only)", disabled=exp.parent == PROJECT_ROOT / "results"):
         from recoverx.benchmarking.experiment import Experiment
         cfg = read_json(exp / "experiment_config.json")
         Experiment(exp, Path(cfg["dataset_dir"])).phase2(progress=lambda s: None)
         st.rerun()
-    if rep and c2.button("Install this model as the active application model"):
+    if rep and c2.button("Install this model as the active application model", disabled=exp.parent == PROJECT_ROOT / "results"):
         import shutil
-        src = Path(rep['model_dir'])
-        if not src.is_dir():
-            src = exp / 'models' / src.name
-        if not (src / 'model.joblib').is_file() or not (src / 'meta.json').is_file():
-            st.error('Archived model path is unavailable. Try Install included CART model on Overview.')
-        else:
-            dst = get_settings().models_dir / src.name
-            if not dst.exists():
-                shutil.copytree(src, dst)
-            st.success(f"Installed {dst.name}")
+        source = exp / "models" / rep["model_version"]
+        CartSelector.load(source)
+        dst = get_settings().models_dir / source.name
+        if not dst.exists():
+            dst.mkdir()
+            for name in ("model.json", "meta.json"):
+                shutil.copy2(source / name, dst / name)
+        st.success(f"Installed {dst.name}")
     st.caption(RULE_POLICY_TEXT.replace("\n", "  \n"))
 
 
 def page_benchmark():
     st.title("Benchmark Laboratory")
     exps = experiments()
+    include_historical_experiment(exps)
     with st.expander("Launch / resume a benchmark (runs in background)"):
         name = st.text_input("Experiment folder name", value="exp1")
         dataset = st.text_input("Dataset directory", value=str(get_settings().datasets_dir / "v1"))
         reps = st.number_input("Repeats per method", 1, 10, 3)
         if st.button("Launch all phases"):
             try:
-                name = safe_identifier(name)
-            except RecoverXError as e:
-                st.error(str(e))
-                return
-            exp_dir = get_settings().experiments_dir / name
-            exp_dir.mkdir(parents=True, exist_ok=True)
-            log = open(exp_dir / "launch.log", "a")
-            subprocess.Popen([sys.executable, str(PROJECT_ROOT / "scripts" / "run_benchmarks.py"), "--exp", str(exp_dir),
-                              "--dataset", dataset, "--repeats", str(reps), "all"], stdout=log, stderr=log,
-                             cwd=PROJECT_ROOT, start_new_session=True)
-            st.success("Launched. Progress appears below as records are written (refresh).")
+                exp_dir = safe_join(get_settings().experiments_dir, safe_identifier(name))
+                if not (Path(dataset) / "manifest.json").is_file():
+                    raise ValueError("Dataset manifest not found")
+                exp_dir.mkdir(parents=True, exist_ok=True)
+                with open(exp_dir / "launch.log", "a") as log:
+                    subprocess.Popen([sys.executable, str(PROJECT_ROOT / "scripts" / "run_benchmarks.py"), "--exp", str(exp_dir),
+                                      "--dataset", dataset, "--repeats", str(reps), "all"], stdout=log, stderr=log,
+                                     cwd=PROJECT_ROOT, start_new_session=os.name != "nt")
+                st.success("Worker launched. An experiment lock prevents overlapping runs. Check the log for startup errors.")
+            except (RecoverXError, OSError, ValueError) as exc:
+                st.error(str(exc))
     if not exps:
         not_measured("No experiments recorded")
         return
-    exp = st.selectbox("Experiment", exps, format_func=experiment_label, key="bl_exp")
-    if archived_experiment(exp):
-        st.info('These are the saved, read-only exp1 research results. They have not been rerun on this computer.')
+    exp = st.selectbox("Experiment", exps, format_func=lambda p: f"{p.name} (historical, read-only)" if p.parent == PROJECT_ROOT / "results" else p.name, key="bl_exp")
     cfg = read_json(exp / "experiment_config.json")
     p1, p3 = read_jsonl(exp / "runs.jsonl"), read_jsonl(exp / "test_runs.jsonl")
     c = st.columns(4)
@@ -659,7 +717,7 @@ def page_benchmark():
     with st.expander("Saved configuration (replayable)"):
         st.json(cfg)
         st.download_button("Download configuration", json.dumps(cfg, indent=2), file_name=f"{exp.name}_config.json")
-    if p3 and st.button("Recompute analysis from saved records", disabled=archived_experiment(exp)):
+    if p3 and st.button("Recompute analysis from saved records", disabled=exp.parent == PROJECT_ROOT / "results"):
         from recoverx.benchmarking.analysis import analyze_experiment
         analyze_experiment(exp)
     res = read_json(exp / "analysis.json")
@@ -713,27 +771,23 @@ def page_audit():
     st.subheader("Runs")
     if rec["runs"]:
         st.dataframe(pd.DataFrame([{"run": r["run_id"], "method": r["method"], "strategy": r["selection"]["strategy_used"],
-                                    "status": r["status"], "sha_before": r["image_sha256_before"][:16] + "…",
-                                    "sha_after": r["image_sha256_after"][:16] + "…", "unchanged": r["source_unchanged"],
+                                    "status": r["status"], "sha_before": (r["image_sha256_before"] or "unavailable")[:16] + "…",
+                                    "sha_after": (r["image_sha256_after"] or "unavailable")[:16] + "…", "unchanged": r["source_unchanged"],
                                     "tools": ", ".join(f"{e['engine']} {e['tool_version']}" for e in r["engine_runs"])}
                                    for r in rec["runs"]]), hide_index=True, width="stretch")
     man = build_manifest(case)
     st.caption(man["disclaimer"])
+    st.download_button("Export forensic report (PDF)", generate_case_pdf(case),
+                       file_name=f"{case.id}_report.pdf", mime="application/pdf")
+    st.download_button("Export forensic report (Markdown)", case_report(case),
+                       file_name=f"{rec['case_id']}_report.md", mime="text/markdown")
     st.download_button("Export evidence manifest (JSON)", json.dumps(man, indent=2), file_name=f"{rec['case_id']}_manifest.json")
-    st.download_button("Export forensic case report (PDF)", generate_case_pdf(case),
-                       file_name=f"{rec['case_id']}_report.pdf", mime="application/pdf")
 
 
 def page_diagnostics():
     st.title("Settings & Diagnostics")
     d = run_diagnostics()
     st.markdown(f"RecoverX {__version__} · Python {d['python']} · data home `{d['home']}`")
-    if not active_model_dir() and bundled_model_dir():
-        if st.button("Install bundled CART model"):
-            try:
-                st.success(f"Installed {install_bundled_model().name}")
-            except RecoverXError as e:
-                st.error(str(e))
     c1, c2 = st.columns(2)
     with c1:
         st.subheader("Engines")
@@ -752,23 +806,24 @@ def page_diagnostics():
 
 
 def main():
-    st.set_page_config(page_title="RecoverX", page_icon="🔎", layout="wide",
-                       initial_sidebar_state="collapsed")
+    st.set_page_config(page_title="RecoverX", page_icon="🔎", layout="wide", initial_sidebar_state="auto")
     st.markdown(CSS, unsafe_allow_html=True)
-    # Windows release: surface ONLY Quick Recovery; all research pages remain
-    # in the source and case data is still persisted for auditability.
-    if os.name == 'nt' or os.environ.get('RECOVERX_SIMPLE_UI') == '1':
-        st.markdown('<style>[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] '
-                    '{display:none !important;}</style>', unsafe_allow_html=True)
-        page_quick()
-        return
     with st.sidebar:
-        st.markdown("## RecoverX")
-        st.caption("Deleted-file recovery strategy selection · TSK + PhotoRec + CART")
-        advanced = st.checkbox('Show advanced research pages', value=False)
-        choices = PAGES if advanced else [p for p in PAGES if p not in ('Model Training', 'Benchmark Laboratory')]
-        page = st.radio("Navigate", choices, label_visibility="collapsed")
-    {"Quick Recovery": page_quick, "Overview": page_overview, "Case Management": page_cases, "Forensic Analysis": page_analysis,
+        st.markdown('<div class="rx-brand"><span class="rx-logo">R×</span>RecoverX</div>', unsafe_allow_html=True)
+        st.caption("FORENSIC RECOVERY WORKSPACE")
+        st.divider()
+        advanced = st.checkbox('Show advanced pages', value=os.name != 'nt')
+        page = st.radio("Navigate", PAGES if advanced else PAGES[:1], label_visibility="collapsed")
+        st.divider()
+        st.caption(f"v{__version__} · LOCAL OPERATIONS")
+        st.caption("TSK + PhotoRec + interpretable CART")
+        st.caption("Metadata only · No evidence uploads")
+    pages = {"Quick Recovery": page_quick, "Overview": page_overview, "Case Management": page_cases, "Forensic Analysis": page_analysis,
      "Intelligent Recovery": page_recovery, "Recovered Files": page_files, "Model Training": page_training,
      "Benchmark Laboratory": page_benchmark, "Evidence & Audit": page_audit,
-     "Settings & Diagnostics": page_diagnostics}[page]()
+     "Settings & Diagnostics": page_diagnostics}
+    try:
+        pages[page]()
+    except (OSError, ValueError, RecoverXError) as exc:
+        st.error(f"Unable to complete this operation: {exc}")
+        st.caption("Check the selected path, file permissions and Settings & Diagnostics. Existing case data is preserved.")

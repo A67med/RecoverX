@@ -12,22 +12,24 @@ ground-truth verification and deduplication. Fixed methods skip analysis unless
 analyze=True; selector methods cannot skip it and are charged for it."""
 from __future__ import annotations
 
+import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Callable
 
 from .. import STRATEGIES
 from ..config import PHOTOREC_TIMEOUT, TSK_TIMEOUT, get_settings
-from ..exceptions import EvidenceIntegrityError
 from ..engines.engine_registry import get_engine
 from ..forensic.case_store import Case, verify_case_evidence
+from ..exceptions import EvidenceIntegrityError
 from ..forensic.filesystem_analyzer import analyze_image
 from ..forensic.hashing import sha256_file
+from ..forensic.storage import atomic_json, operation_lock
+from ..engines.photorec_engine import PhotoRecEngine, DEFAULT_SCRIPT
 from ..ml.features import extract_features
 from ..ml.selector import CartSelector, latest_model_dir, rule_select
-from ..models import utcnow
-from .integrity import apply_ground_truth, assign_duplicate_groups, canonical_view, recovery_metrics
+from ..models import EngineRun, utcnow
+from .integrity import apply_ground_truth, canonical_view, recovery_metrics
 
 ENGINE_PLAN = {"tsk": ["tsk"], "photorec": ["photorec"], "combined": ["tsk", "photorec"]}
 
@@ -67,112 +69,201 @@ def _select(method: str, features: dict | None, model_dir: Path | None) -> dict:
     return sel
 
 
+def validate_ground_truth(gt: dict | None) -> None:
+    if gt is None:
+        return
+    import re
+    if not isinstance(gt, dict):
+        raise ValueError("Ground truth must be an object with deleted/allocated lists")
+    groups = []
+    for kind in ("deleted", "allocated"):
+        entries = gt.get(kind, [])
+        if not isinstance(entries, list):
+            raise ValueError(f"Ground truth {kind} must be a list")
+        hashes = set()
+        for entry in entries:
+            if not isinstance(entry, dict) or not re.fullmatch(r"[0-9a-f]{64}", entry.get("sha256", "")):
+                raise ValueError("Ground truth requires lowercase SHA-256 digests")
+            if kind == "deleted" and not isinstance(entry.get("id"), str):
+                raise ValueError("Deleted ground-truth entries require string IDs")
+            hashes.add(entry["sha256"])
+        groups.append(hashes)
+    if groups[0] & groups[1]:
+        raise ValueError("A ground-truth digest cannot be both deleted and allocated")
+
+
 def run_recovery(case: Case, method: str, *, ground_truth: dict | None = None,
                  analyze: bool | None = None, model_dir: Path | None = None,
                  timeouts: dict | None = None, label: str = "",
-                 progress: Callable[[str], None] | None = None) -> dict:
+                 cancel_event: threading.Event | None = None, progress=None,
+                 conservative: bool = True) -> dict:
+    """Run under a case lock. Automatic modes default to both engines.
+
+    conservative=False is an explicit research opt-in, recorded in every run.
+    It cannot override incomplete analysis or out-of-range CART predictions.
+    """
+    validate_ground_truth(ground_truth)
+    if method not in (*STRATEGIES, "rule", "cart", "smart") and method not in [f"manual:{s}" for s in STRATEGIES]:
+        raise ValueError(f"unknown method {method}")
+    with operation_lock(case.dir):
+        return _run_locked(case, method, ground_truth=ground_truth, analyze=analyze,
+                           model_dir=model_dir, timeouts=timeouts, label=label,
+                           cancel_event=cancel_event, progress=progress, conservative=conservative)
+
+
+def _run_locked(case, method, *, ground_truth, analyze, model_dir, timeouts, label,
+                cancel_event, progress, conservative):
     rec = case.load()
     image = Path(rec["image_path"])
-    started_at = utcnow()
     run_id = time.strftime("R%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:6]
     run_dir = case.runs_dir() / run_id
     timeouts = {"tsk": TSK_TIMEOUT, "photorec": PHOTOREC_TIMEOUT, **(timeouts or {})}
-    needs_analysis = method in ("rule", "cart", "smart") or method.startswith("manual:")
-    analyze = needs_analysis if analyze is None else (analyze or needs_analysis)
-    timing: dict = {}
-    case.event("run_started", run_id=run_id, method=method)
-
-    def notify(message: str) -> None:
-        if progress is not None:
-            progress(message)
-
-    T0 = time.perf_counter()
-    notify("Checking the evidence SHA-256 baseline")
-    t = time.perf_counter()
-    try:
-        sha_before = verify_case_evidence(case, operation=f"recovery:{run_id}")
-    except EvidenceIntegrityError:
-        case.event("run_blocked", run_id=run_id, reason="evidence_integrity")
-        raise
-    timing["hash_initial_s"] = time.perf_counter() - t
-
+    # All production runs inspect the volume system. Research callers can opt out.
+    analyze = True if analyze is None else analyze or method in ("rule", "cart", "smart") or method.startswith("manual:")
+    started_at, t0 = utcnow(), time.perf_counter()
+    timing, engine_runs, warnings = {}, [], []
     analysis = features = None
-    offset = 0
-    if analyze:
-        notify("Inspecting filesystem metadata (mmls / fsstat / fls)")
-        t = time.perf_counter(); analysis = analyze_image(image); timing["analysis_s"] = time.perf_counter() - t
-        offset = analysis.sector_offset
-        t = time.perf_counter(); features = extract_features(analysis); timing["features_s"] = time.perf_counter() - t
+    before = after = None
+    error, status = None, "running"
+    selection = {"method": method, "recommended": None, "strategy_used": None,
+                 "rationale": "Not selected", "fallback": None, "model_version": None,
+                 "conservative": conservative}
 
-    t = time.perf_counter()
-    notify("Selecting recovery strategy")
-    selection = _select(method, features, model_dir)
-    timing["selection_s"] = time.perf_counter() - t
-    timing["inference_s"] = selection.get("inference_s", 0.0)
-    case.event("strategy_selected", run_id=run_id, **{k: selection[k] for k in ("method", "recommended", "strategy_used", "fallback")})
+    def notify(stage, **extra):
+        snapshot = {"run_id": run_id, "stage": stage, "started_at": started_at,
+                    "updated_at": utcnow(), "status": status,
+                    "engines": [er.to_dict() for er in engine_runs], **extra}
+        atomic_json(case.dir / "active_run.json", snapshot)
+        case.event(stage, run_id=run_id, **extra)
+        if progress:
+            progress({"stage": stage, **extra})
 
-    engine_runs = []
-    initial_plan = list(ENGINE_PLAN[selection["strategy_used"]])
-    # In smart mode, a failed/empty single-engine run triggers the other engine.
-    # This is not a guarantee of complete recovery when some (not all) files return.
-    for name in initial_plan:
-        notify(f"Running {name.upper()} recovery engine")
-        er = get_engine(name).run(image, run_dir / name, sector_offset=offset, timeout=timeouts[name],
-                                  run_id=f"{run_id}-{name}")
-        timing[f"engine_{name}_s"] = er.elapsed_s
-        case.event("engine_finished", run_id=run_id, engine=name, status=er.status, files=len(er.files), error=er.error)
-        engine_runs.append(er)
+    def cancelled():
+        return cancel_event is not None and cancel_event.is_set()
 
-    if method == 'smart' and len(initial_plan) == 1:
-        first = engine_runs[0]
-        if first.status != 'completed' or not first.files:
-            other = 'photorec' if first.engine == 'tsk' else 'tsk'
-            notify(f"Trying {other.upper()} because the first method returned no files or failed")
-            er = get_engine(other).run(image, run_dir / other, sector_offset=offset,
-                                       timeout=timeouts[other], run_id=f"{run_id}-{other}")
-            timing[f"engine_{other}_s"] = er.elapsed_s
-            case.event('engine_finished', run_id=run_id, engine=other, status=er.status,
-                       files=len(er.files), error=er.error)
-            engine_runs.append(er)
-            reason = (f"{first.engine.upper()} returned no files" if first.status == 'completed'
-                      else f"{first.engine.upper()} status: {first.status}")
-            previous_fallback = selection.get('fallback')
-            selection['fallback'] = (previous_fallback + '; ' if previous_fallback else '') + reason + f"; tried {other.upper()}"
-            selection['strategy_used'] = 'combined'
-            case.event('smart_fallback', run_id=run_id, first_engine=first.engine,
-                       second_engine=other, reason=reason)
+    notify("run_started", method=method)
+    try:
+        notify("hashing_source", detail="Streaming SHA-256 before recovery")
+        t = time.perf_counter()
+        try:
+            before = sha256_file(image)
+        except OSError:
+            verify_case_evidence(case, operation=f"recovery:{run_id}")
+            raise
+        verify_case_evidence(case, current_sha256=before, operation=f"recovery:{run_id}")
+        timing["hash_initial_s"] = time.perf_counter() - t
+        if cancelled():
+            status = "cancelled"
+        else:
+            if analyze:
+                notify("analyzing", detail="Read-only partition and filesystem inspection")
+                t = time.perf_counter()
+                analysis = analyze_image(image, cancel_event=cancel_event)
+                timing["analysis_s"] = time.perf_counter() - t
+                t = time.perf_counter()
+                features = extract_features(analysis)
+                timing["features_s"] = time.perf_counter() - t
+            selection = {**_select(method, features, model_dir), "conservative": conservative}
+            automatic = method in ("rule", "cart")
+            reasons = []
+            if automatic and conservative:
+                reasons.append("Automatic preservation policy runs both engines; recommendation is advisory")
+            if automatic and analysis and analysis.status != "analysis_completed":
+                reasons.append("Incomplete filesystem analysis cannot justify omitting an engine")
+            if automatic and selection.get("out_of_training_range"):
+                reasons.append("CART inputs outside training range: " + ", ".join(selection["out_of_training_range"]))
+            if automatic and selection.get("fallback"):
+                reasons.append("No usable CART model; rule-v1 advice is not evidence of equivalent recoverability")
+            if reasons:
+                selection["safety_override"] = "; ".join(reasons)
+                selection["strategy_used"] = "combined"
+            selection["reliability"] = "Advisory only; leaf frequencies are not recovery probabilities"
+            offsets = [0]
+            if analysis:
+                offsets = list(dict.fromkeys(p.start_sector for p in analysis.partitions)) or [analysis.sector_offset]
+            plan = list(ENGINE_PLAN[selection["strategy_used"]])
+            selection["initial_engines"] = plan.copy()
+            notify("strategy_selected", **selection)
+            for name in plan:
+                scopes = offsets if name == "tsk" else [0]
+                for offset in scopes:
+                    if cancelled():
+                        status = "cancelled"
+                        break
+                    suffix = f"{name}-sector-{offset}" if name == "tsk" and (len(scopes) > 1 or offset) else name
+                    engine = get_engine(name)
+                    if isinstance(engine, PhotoRecEngine) and analysis and (analysis.partitions or not analysis.fs_type):
+                        engine = PhotoRecEngine(script=DEFAULT_SCRIPT.replace(",freespace", ""))
+                        warnings.append("PhotoRec scans the whole image because a single verified filesystem scope is unavailable; allocated files may be included")
+                    notify("engine_started", engine=name, sector_offset=offset,
+                           detail=f"{name}: recovering; byte progress is unavailable")
+                    try:
+                        er = engine.run(image, run_dir / suffix, sector_offset=offset,
+                                        timeout=timeouts[name], cancel_event=cancel_event, run_id=f"{run_id}-{suffix}")
+                    except OSError as exc:
+                        er = EngineRun(name, f"{run_id}-{suffix}", "failed", str(run_dir / suffix), 0.0,
+                                       error=str(exc))
+                    engine_runs.append(er)
+                    timing[f"engine_{suffix}_s"] = er.elapsed_s
+                    notify("engine_finished", engine=name, sector_offset=offset, engine_status=er.status,
+                           files=len(er.files), error=er.error)
+                    if er.status == "cancelled" or cancelled():
+                        status = "cancelled"
+                        break
+                if status == "cancelled":
+                    break
+                if method == "smart" and len(plan) == 1 and (
+                    any(er.status != "completed" for er in engine_runs) or not any(er.files for er in engine_runs)
+                ):
+                    other = "photorec" if name == "tsk" else "tsk"
+                    failed = [er.status for er in engine_runs if er.status != "completed"]
+                    reason = f"{name.upper()}: " + (", ".join(failed) if failed else "zero files")
+                    selection["engine_fallback"] = reason
+                    notify("smart_fallback", first_engine=name, second_engine=other, reason=reason)
+                    plan.append(other)
+            selection["engines_attempted"] = [er.engine for er in engine_runs]
+            if status != "cancelled":
+                status = "completed" if engine_runs and all(e.status == "completed" for e in engine_runs) else "incomplete"
+    except EvidenceIntegrityError as exc:
+        rec = case.load()
+        status, error = "blocked", str(exc)
+        notify("run_blocked", reason="evidence_integrity")
+    except Exception as exc:
+        status, error = "failed", f"{type(exc).__name__}: {exc}"
+    finally:
+        notify("verifying", detail="Hashing source and classifying output digests")
+        t = time.perf_counter()
+        try:
+            after = sha256_file(image)
+        except OSError as exc:
+            error = f"{error or ''}; final source verification failed: {exc}".strip("; ")
+            if status != "blocked":
+                status = "failed"
+        timing["hash_final_s"] = time.perf_counter() - t
 
     files = [f for er in engine_runs for f in er.files]
-    notify("Hashing outputs and verifying recovered evidence")
-    t = time.perf_counter(); apply_ground_truth(files, ground_truth); timing["verify_s"] = time.perf_counter() - t
-    t = time.perf_counter(); assign_duplicate_groups(files); canonical = canonical_view(files); timing["dedup_s"] = time.perf_counter() - t
-    metrics = recovery_metrics(files, ground_truth)
-
-    t = time.perf_counter(); sha_after = sha256_file(image); timing["hash_final_s"] = time.perf_counter() - t
-    timing["total_s"] = time.perf_counter() - T0
-    timing = {k: round(v, 6) for k, v in timing.items()}
-
-    run = {
-        "run_id": run_id, "label": label, "method": method, "started_at": started_at,
-        "finished_at": utcnow(), "selection": selection,
-        "analysis": analysis.to_dict() if analysis else None, "features": features,
-        "engine_runs": [er.to_dict() for er in engine_runs], "canonical_files": canonical,
-        "metrics": metrics, "timing": timing,
-        "image_sha256_before": sha_before, "image_sha256_after": sha_after,
-        "source_unchanged": sha_before == sha_after == (rec["image_sha256_initial"] or sha_before),
-        "status": ("evidence_changed" if sha_before != sha_after else
-                   "completed" if all(er.status == "completed" for er in engine_runs) else "incomplete"),
-    }
+    apply_ground_truth(files, ground_truth)
+    canonical = canonical_view(files)
+    unchanged = before is not None and before == after == rec.get("image_sha256_initial")
+    if not unchanged and engine_runs:
+        status = "integrity_failed"
+        warnings.append("Source changed or could not be verified; results must not be treated as verified evidence")
+    timing["total_s"] = time.perf_counter() - t0
+    run = {"run_id": run_id, "label": label, "method": method, "started_at": started_at,
+           "finished_at": utcnow(), "selection": selection,
+           "analysis": analysis.to_dict() if analysis else None, "features": features,
+           "engine_runs": [er.to_dict() for er in engine_runs], "canonical_files": canonical,
+           "metrics": recovery_metrics(files, ground_truth), "timing": {k: round(v, 6) for k, v in timing.items()},
+           "image_sha256_before": before, "image_sha256_after": after,
+           "source_unchanged": unchanged, "status": status, "error": error, "warnings": warnings,
+           "settings": {"timeouts": timeouts, "conservative": conservative, "analysis_requested": analyze}}
     rec["runs"].append(run)
-    if run["status"] == "evidence_changed":
+    if status == "integrity_failed":
         rec["status"] = "evidence_changed"
-        case.event("evidence_changed_during_run", run_id=run_id,
-                   sha256_before=sha_before, sha256_after=sha_after)
     elif analysis:
         rec["status"] = analysis.status
-    rec["last_hash_check"] = {"at": utcnow(), "unchanged": run["source_unchanged"]}
+        rec["analysis"] = {**analysis.to_dict(), "features": features, "at": run["finished_at"]}
+    rec["last_hash_check"] = {"at": utcnow(), "unchanged": unchanged}
     case.save(rec)
-    case.event("run_finished", run_id=run_id, status=run["status"], source_unchanged=run["source_unchanged"],
-               total_s=timing["total_s"])
-    notify(f"Finished: {run['status']} | {metrics['outputs']} recovered output(s)")
+    notify("run_finished", outcome=status, engines_attempted=selection.get("engines_attempted", []), source_unchanged=unchanged, total_s=timing["total_s"], error=error)
     return run
