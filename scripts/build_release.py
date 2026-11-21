@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-FORBIDDEN = (".venv/", "tools/", "downloads/", "workspace/", ".env", "__pycache__/", ".smoke/", ".claude/")
+FORBIDDEN = (".venv/", "tools/", "downloads/", "workspace/", "__pycache__/", ".smoke/", ".claude/", "release/")
 
 
 def main() -> int:
