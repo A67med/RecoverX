@@ -1,4 +1,34 @@
+# RecoverX — One-Click Kali Edition
+
+**Start here (Arabic):** [`START_ONE_CLICK_AR.md`](START_ONE_CLICK_AR.md)
+
+This edition adds a Kali launcher (desktop + application-menu shortcut), automatic Python environment setup on first launch, a *Quick Recovery* workflow that creates/opens a case, analyzes and recovers in one action, optional safe read-only capture from an unmounted non-system block device (polkit authorization), a recovered-file download option (size-limited), and a one-click PDF export.
+
+**Install (once):** Open `Install-RecoverX.desktop` in your Kali file manager and allow launching; if the desktop environment blocks it, run `bash INSTALL_ON_KALI.sh` once. Subsequent starts are by clicking **RecoverX**. The launcher binds Streamlit only to localhost, reuses a healthy existing server, and logs failures under `~/.cache/recoverx/launcher.log`.
+
+**Safety:** Never run Streamlit as root, never modify a disk in order to recover from it. The optional device imaging flow reads only from a verified, currently unmounted non-system disk/partition and requires explicit consent. Outputs go to a separate working directory. Real-world recovery is not guaranteed.
+
+---
+
 # RecoverX
+
+## Improved version — quick demo & safety updates
+
+This copy includes a safe synthetic FAT16 **Demo Mode**, fail-closed evidence SHA-256 checks,
+per-run timestamps and stage updates, a metadata-only **PDF case report**, and an optional
+installer for the CART model bundled in `results/exp1/models`.
+
+```bash
+python3 scripts/install_bundled_model.py  # trusts the model included with this repository
+streamlit run app.py
+```
+
+In the app, create a demo case under **Case Management → Safe demo**, then use
+**Forensic Analysis → Intelligent Recovery (Fixed: combined) → Recovered Files → Evidence & Audit**.
+Open **Show advanced research pages** in the sidebar for archived, read-only experiment results.
+See `START_HERE_AR.md` and `RELEASE_NOTES.md` for changes, known limitations and full setup.
+**The historical 51-pass claim below describes the original developer environment, not a new
+full integration run of this modified release.**
 
 Research-grade evaluation of **CART-based deleted-file recovery strategy selection** over
 **The Sleuth Kit (TSK)** and **PhotoRec**. RecoverX inspects a raw disk image, extracts

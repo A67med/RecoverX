@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 from .models import CommandResult, utcnow
+from .tool_paths import resolve_tool
 
 
 def run_command(
@@ -22,6 +23,10 @@ def run_command(
 ) -> CommandResult:
     if not args or not all(isinstance(a, str) for a in args):
         raise ValueError("args must be a non-empty list of strings")
+    # Resolve Windows tools installed outside PATH (notably photorec_win.exe).
+    resolved = resolve_tool(args[0])
+    if resolved:
+        args = [resolved, *args[1:]]
     env = os.environ.copy()
     env.setdefault("TERM", "xterm")  # PhotoRec's ncurses UI needs a terminal type
     if env_extra:
@@ -32,7 +37,7 @@ def run_command(
         proc = subprocess.Popen(
             args, cwd=str(cwd) if cwd else None, env=env,
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            start_new_session=True, text=True, errors="replace",
+            start_new_session=(os.name != "nt"), text=True, errors="replace",
         )
     except FileNotFoundError as e:
         return CommandResult(args, None, "", f"executable not found: {e}", 0.0, started, cwd=str(cwd) if cwd else None)
@@ -49,10 +54,13 @@ def run_command(
             elif time.perf_counter() > deadline:
                 timed_out = True
             if timed_out or cancelled:
-                try:
-                    os.killpg(proc.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
+                if os.name == 'nt':
+                    proc.kill()  # killpg does not exist on Windows
+                else:
+                    try:
+                        os.killpg(proc.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
                 out, err = proc.communicate()
                 break
     elapsed = time.perf_counter() - t0

@@ -14,6 +14,7 @@ from ..forensic.hashing import sha256_file
 from ..forensic.image_validator import ensure_safe_output
 from ..models import EngineRun, RecoveredFile
 from ..process import run_command
+from ..tool_paths import resolve_tool
 
 MAGIC = [
     (b"\x89PNG\r\n\x1a\n", "png"), (b"\xff\xd8\xff", "jpeg"), (b"%PDF-", "pdf"),
@@ -41,7 +42,7 @@ class BaseEngine(ABC):
     executables: tuple[str, ...] = ()
 
     def capabilities(self) -> dict:
-        found = {exe: shutil.which(exe) for exe in self.executables}
+        found = {exe: resolve_tool(exe) for exe in self.executables}
         return {"engine": self.name, "available": all(found.values()), "executables": found,
                 "version": self.version() if all(found.values()) else None}
 

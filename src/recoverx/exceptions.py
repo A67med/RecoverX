@@ -20,3 +20,7 @@ class EngineError(RecoverXError):
 
 class ModelError(RecoverXError):
     pass
+
+
+class EvidenceIntegrityError(RecoverXError):
+    """The stored evidence digest is absent or no longer matches its baseline."""

@@ -1,5 +1,31 @@
 # Installation, User Guide, Troubleshooting
 
+## Improved-release note (read before demo)
+
+On an Ubuntu workstation use a virtual environment and install the included model:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+python -m pip install -r requirements.txt
+python scripts/install_bundled_model.py
+python scripts/check_environment.py
+streamlit run app.py
+```
+
+The easiest first case is the **Safe demo** button in Case Management, which creates a
+48 MiB synthetic FAT16 deleted-file image and accompanying ground truth. The dashboard
+pre-selects that ground truth for the demo case. In Intelligent Recovery choose Fixed:
+combined; then review results and export the PDF from Evidence & Audit. The PDF is a
+metadata summary and is not a legal chain-of-custody certification.
+
+The pretrained CART model can also be installed from Overview. Its archived training
+paths may point at the original computer; the new installer uses the bundled source.
+The model was trained under scikit-learn 1.9.1; other versions may emit pickle warnings.
+Historical `results/exp1` data is browseable under advanced research pages as read-only
+results, not as a new local benchmark. For interactive fixed TSK recovery, pre-analysis
+is enabled by default to determine partition offsets; partitioned images still need
+separate PhotoRec validation.
+
 ## 1. Install (tested: Ubuntu 24.04, Python 3.13)
 
 ```bash

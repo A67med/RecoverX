@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ..config import get_settings
+from ..exceptions import EvidenceIntegrityError
 from ..models import utcnow
 from .hashing import sha256_file
 from .image_validator import safe_identifier, validate_image
@@ -88,6 +89,40 @@ def open_case(case_id: str, cases_dir: Path | None = None) -> Case:
     if not (d / "case.json").exists():
         raise FileNotFoundError(case_id)
     return Case(d)
+
+
+def verify_case_evidence(case: Case, *, current_sha256: str | None = None,
+                         operation: str = "operation") -> str:
+    """Fail closed before analysis/recovery when the case evidence changed.
+
+    A SHA-256 baseline recorded when the case was created is required for
+    subsequent operations. Keep an audit record of failed integrity checks.
+    This does not certify chain of custody; it only detects byte changes.
+    """
+    rec = case.load()
+    baseline = rec.get("image_sha256_initial")
+    try:
+        digest = current_sha256 or sha256_file(Path(rec["image_path"]))
+    except OSError as e:
+        rec["status"] = "evidence_unavailable"
+        rec["last_hash_check"] = {"at": utcnow(), "unchanged": False, "error": str(e)}
+        case.save(rec)
+        case.event("evidence_check_failed", operation=operation, error=str(e))
+        raise EvidenceIntegrityError(f"Evidence image cannot be read: {e}") from e
+    ok = bool(baseline) and digest == baseline
+    rec["last_hash_check"] = {"at": utcnow(), "unchanged": ok, "sha256": digest}
+    if not ok:
+        rec["status"] = "evidence_changed" if baseline else "evidence_not_baselined"
+        case.save(rec)
+        case.event("evidence_check_failed", operation=operation, baseline_sha256=baseline,
+                   current_sha256=digest)
+        raise EvidenceIntegrityError(
+            "Evidence SHA-256 does not match the original case hash. "
+            "Recovery/analysis blocked; create a new case for changed evidence."
+            if baseline else "No initial evidence hash. Create a new case with SHA-256 enabled."
+        )
+    case.save(rec)
+    return digest
 
 
 def build_manifest(case: Case) -> dict:

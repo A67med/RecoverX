@@ -14,6 +14,7 @@ def utcnow() -> str:
 CASE_STATES = (
     "validated", "analysis_completed", "partially_analyzed", "unsupported_format",
     "filesystem_not_detected", "tool_unavailable", "analysis_failed",
+    "evidence_changed", "evidence_unavailable", "evidence_not_baselined",
 )
 
 # Integrity states (spec §13)

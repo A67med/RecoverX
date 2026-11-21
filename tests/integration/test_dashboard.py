@@ -15,6 +15,8 @@ PAGES = ["Overview", "Case Management", "Forensic Analysis", "Intelligent Recove
 def test_page_renders_on_empty_install(page):
     at = st_testing.AppTest.from_file(APP, default_timeout=60)
     at.run()
+    if page in ('Model Training', 'Benchmark Laboratory'):
+        at.sidebar.checkbox[0].set_value(True).run()
     at.sidebar.radio[0].set_value(page).run()
     assert not at.exception, at.exception
     text = " ".join(m.value for m in at.markdown) + " ".join(i.value for i in at.info)

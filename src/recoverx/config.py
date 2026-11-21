@@ -35,7 +35,9 @@ class Settings:
 
 
 def get_settings() -> Settings:
-    home = Path(os.environ.get("RECOVERX_HOME", PROJECT_ROOT / "workspace")).resolve()
+    default_home = (Path(os.environ.get('LOCALAPPDATA') or Path.home() / 'AppData' / 'Local') / 'RecoverX'
+                    if os.name == 'nt' else PROJECT_ROOT / 'workspace')
+    home = Path(os.environ.get('RECOVERX_HOME', default_home)).resolve()
     return Settings(home=home)
 
 

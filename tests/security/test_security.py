@@ -6,7 +6,7 @@ import pytest
 
 from recoverx.engines.photorec_engine import PhotoRecEngine
 from recoverx.engines.sleuthkit_engine import SleuthKitEngine
-from recoverx.exceptions import ImageValidationError, UnsafePathError
+from recoverx.exceptions import EvidenceIntegrityError, ImageValidationError, UnsafePathError
 from recoverx.forensic.case_store import create_case, open_case
 from recoverx.forensic.image_validator import ensure_safe_output, safe_identifier, safe_join, validate_image
 from recoverx.process import run_command
@@ -113,8 +113,10 @@ def test_hash_mismatch_detected(fat_fixture, tmp_path):
     with open(copy, "r+b") as f:  # simulate tampering after acquisition
         f.seek(100)
         f.write(b"\xff")
-    run = run_recovery(case, "tsk", ground_truth=fat_fixture["gt"])
-    assert run["source_unchanged"] is False
+    with pytest.raises(EvidenceIntegrityError, match='does not match'):
+        run_recovery(case, "tsk", ground_truth=fat_fixture["gt"])
+    assert case.load()["status"] == "evidence_changed"
+    assert not case.load()["runs"]
 
 
 @needs_tools
