@@ -2,6 +2,8 @@
 setlocal
 cd /d "%~dp0"
 title RecoverX v0.4 for Windows - Setup
+rem A PowerShell 7 parent would leak its module path into Windows PowerShell 5.1.
+set "PSModulePath="
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\setup_windows.ps1" %*
 if errorlevel 1 (
     echo.

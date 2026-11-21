@@ -47,13 +47,18 @@ function Get-OfficialZip([string]$filename, [string]$url, [string]$sha256) {
     $archive = Join-Path $downloadDir $filename
     if (-not (Test-Path -LiteralPath $archive)) {
         Write-Host "Downloading official package: $filename"
-        try { Invoke-WebRequest -Uri $url -OutFile $archive -UseBasicParsing -MaximumRedirection 5 }
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+            (New-Object System.Net.WebClient).DownloadFile($url, $archive)
+        }
         catch {
             Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
             throw "Cannot download $filename. Download it from $url into $downloadDir and run setup again. Details: $_"
         }
     } else { Write-Host "Using local ZIP: $filename" }
-    $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    $fs = [System.IO.File]::OpenRead($archive)
+    try { $hash = -join ($sha.ComputeHash($fs) | ForEach-Object { $_.ToString('x2') }) } finally { $fs.Dispose(); $sha.Dispose() }
     if ($hash -ne $sha256.ToLowerInvariant()) {
         throw "SHA-256 mismatch for $filename (expected $sha256; got $hash). Delete the ZIP and obtain the official release."
     }
@@ -70,7 +75,8 @@ function Install-Tsk {
     $temp = Join-Path $env:TEMP ('RecoverX_' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $temp -Force | Out-Null
     try {
-        Expand-Archive -LiteralPath $zip -DestinationPath $temp -Force
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $temp)
         $exe = Get-ChildItem -Path $temp -Filter 'tsk_recover.exe' -File -Recurse | Select-Object -First 1
         if ($null -eq $exe) { throw 'tsk_recover.exe was not found inside the Sleuth Kit ZIP' }
         New-Item -ItemType Directory -Path $dest -Force | Out-Null
