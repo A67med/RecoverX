@@ -49,3 +49,11 @@ htmlcov/
 /reports/final_test_results.txt
 
 /reports/test_results.txt
+
+# v0.4: local tool/agent configs, acquired evidence images, release builds
+.claude/
+*.img.partial
+*.acquisition.json
+/release/
+constraints-local*.txt
+/.smoke/
