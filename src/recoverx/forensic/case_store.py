@@ -149,12 +149,14 @@ def build_manifest(case: Case) -> dict:
         "case_id": rec["case_id"], "generated_at": utcnow(),
         "source": {"path": rec["image_path"], "size": rec["image_size"],
                    "sha256_initial": rec["image_sha256_initial"]},
+        "acquisition": rec.get("acquisition"),
         "runs": [{
             "run_id": r["run_id"], "method": r["method"], "status": r["status"],
             "started_at": r["started_at"], "finished_at": r["finished_at"],
             "warnings": r.get("warnings", []), "error": r.get("error"), "settings": r.get("settings", {}), "strategy_used": r["selection"]["strategy_used"],
             "selection": r["selection"], "features": r.get("features"), "sha256_before": r["image_sha256_before"],
             "sha256_after": r["image_sha256_after"], "source_unchanged": r["source_unchanged"],
+            "export": r.get("export"),
             "engines": [{"warnings": e.get("warnings", []), **{k: e[k] for k in ("engine", "run_id", "status", "tool_version", "output_dir", "error")}}
                         | {"commands": [{"args": c["args"], "returncode": c["returncode"],
                                          "started_at": c["started_at"], "elapsed_s": c["elapsed_s"]}

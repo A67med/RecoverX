@@ -76,6 +76,25 @@ def generate_case_pdf(case: Case) -> bytes:
         last = rec['last_hash_check']
         story.append(_p('Last integrity check: ' + ('UNCHANGED' if last.get('unchanged') else 'FAILED')
                         + '  /  ' + str(last.get('at', '-')), body))
+    acq = rec.get('acquisition')
+    if acq:
+        section('Direct USB acquisition')
+        disk = acq.get('disk') or {}
+        facts([('Source device', f"Disk {disk.get('number', '-')} | {disk.get('name', '-')} | bus {disk.get('bus_type', '-')}"),
+               ('Device serial', disk.get('serial') or 'not reported'),
+               ('Device size (bytes)', acq.get('size')), ('Bytes copied', acq.get('bytes_copied')),
+               ('Acquisition status', acq.get('status')),
+               ('Source-stream SHA-256', acq.get('source_stream_sha256') or '-'),
+               ('Image SHA-256 (destination re-read)', acq.get('image_sha256') or '-'),
+               ('Destination verified', 'YES' if acq.get('image_verified') else 'NO'),
+               ('Source re-read SHA-256', acq.get('source_reread_sha256') or 'not performed'),
+               ('Unreadable bytes (zero-filled)', acq.get('unreadable_bytes', 0)),
+               ('Started / finished (UTC)', f"{acq.get('started_at', '-')} / {acq.get('finished_at', '-')}"),
+               ('Throughput', f"{acq.get('throughput_mib_s', '-')} MiB/s"),
+               ('Partition layout', f"{(acq.get('partition_layout') or {}).get('scheme', 'unknown')}: "
+                + ", ".join(f"{p.get('type')} @ byte {p.get('offset_bytes')}" for p in (acq.get('partition_layout') or {}).get('partitions', [])[:6]))])
+        for line in acq.get('limitations') or []:
+            story.append(_p(line, small))
     section('Recovery runs')
     runs = rec.get('runs', [])
     if not runs:
@@ -90,6 +109,11 @@ def generate_case_pdf(case: Case) -> bytes:
             _p(f"Source unchanged: {run.get('source_unchanged')}    Recovered outputs: {r_metrics.get('outputs', 0)}    Distinct contents: {r_metrics.get('distinct_contents', 0)}",body),
             _p(f"Verified exact matches: {r_metrics.get('exact_recovered', 'not measured (no ground truth)')}    Total time: {(run.get('timing') or {}).get('total_s', '-')} s",body),
         ]))
+        exp = run.get('export')
+        if exp:
+            story.append(_p(f"Exported to: {exp.get('output_dir')}  |  copied with verified SHA-256: {exp.get('copied_ok')} of "
+                            f"{exp.get('distinct_files')}  |  structurally valid: {exp.get('structurally_valid')}  |  "
+                            f"invalid: {exp.get('structurally_invalid')}  |  not checked: {exp.get('not_checked')}", small))
         engines = run.get('engine_runs') or []
         if engines:
             facts([('Engine ' + str(e.get('engine')), f"{e.get('status')} | {len(e.get('files') or [])} files | {e.get('elapsed_s', '-')} s | {e.get('error') or 'no error'}") for e in engines])
