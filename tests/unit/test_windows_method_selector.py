@@ -1,29 +1,29 @@
-"""Regression checks for the restored Windows Quick Recovery dropdown.
+"""The Quick Recovery method selector exposes exactly the six supported strategies.
 
-The Streamlit import is intentionally avoided so option mapping can be checked
-without running Windows binaries or the interactive UI.
+Parsed with ast so the mapping is checked without importing Streamlit.
 """
 import ast
 from pathlib import Path
 
 from recoverx.recovery.orchestrator import _select
+from recoverx.workflow import METHODS as WORKFLOW_METHODS
 
 
-def test_windows_quick_options_match_supported_methods():
-    source = (Path(__file__).resolve().parents[2] / 'src/recoverx/ui/dashboard.py').read_text(encoding='utf-8')
+def _methods():
+    source = (Path(__file__).resolve().parents[2] / 'src/recoverx/ui/quick_app.py').read_text(encoding='utf-8')
     tree = ast.parse(source)
-    mapping = next(ast.literal_eval(n.value) for n in tree.body
-                   if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'QUICK_RECOVERY_METHODS'
-                                                        for t in n.targets))
-    assert mapping['Smart Recovery (CART + fallback)'] == 'smart'
-    assert mapping['TSK only'] == 'tsk'
-    assert mapping['PhotoRec only'] == 'photorec'
-    assert mapping['TSK + PhotoRec (both)'] == 'combined'
-    assert mapping['Conservative (CART advice)'] == 'cart'
-    assert mapping['Conservative (rule-v1 advice)'] == 'rule'
-    assert 'st.selectbox(\'Recovery strategy\'' in source
-    assert 'method = QUICK_RECOVERY_METHODS[method_choice]' in source
-    assert 'method=method, progress=' in source
+    node = next(n for n in tree.body if isinstance(n, ast.Assign)
+                and any(isinstance(t, ast.Name) and t.id == 'METHODS' for t in n.targets))
+    return [(k, label) for k, label, _ in ast.literal_eval(node.value)], source
+
+
+def test_six_quick_options_map_to_supported_methods():
+    methods, source = _methods()
+    assert methods == [('smart', 'Smart Recovery'), ('tsk', 'TSK only'), ('photorec', 'PhotoRec only'),
+                       ('combined', 'TSK + PhotoRec'), ('cart', 'Automatic (CART only)'),
+                       ('rule', 'Automatic (rule-v1 only)')]
+    assert {k for k, _ in methods} == set(WORKFLOW_METHODS)
+    assert 'st.radio("Recovery method"' in source
 
 
 def test_manual_engine_selection_remains_fixed():

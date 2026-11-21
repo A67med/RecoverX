@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -14,12 +13,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from recoverx.quick import guided_recovery
-from recoverx.ml.model_install import bundled_model_dir, install_bundled_model
-from recoverx.acquisition import candidate_devices, capture_device, AcquisitionError
+from recoverx.ui import quick_app
 from recoverx.reporting.pdf_report import generate_case_pdf
 from recoverx.demo import create_demo_case
-from recoverx.tool_paths import resolve_tool
 from recoverx import STRATEGIES, __version__
 from recoverx.config import PROJECT_ROOT, get_settings
 from recoverx.diagnostics import run_diagnostics
@@ -42,7 +38,6 @@ PAGES = ["Quick Recovery", "Overview", "Case Management", "Forensic Analysis", "
 
 CSS = """
 <style>
-.stApp { background: radial-gradient(ellipse at 100% 0%, #142b40 0%, #080f1b 48%); }
 [data-testid="stSidebar"] { background: #0b1422; border-right: 1px solid #203148; }
 .block-container { padding-top: 2.3rem; padding-bottom: 4rem; max-width: 1450px; }
 h1,h2,h3 { letter-spacing: -.035em; font-weight: 650; }
@@ -54,9 +49,6 @@ h1 { font-size: 2.3rem !important; }
 [data-testid="stDataFrame"] { border-radius: 12px; overflow: hidden; border: 1px solid #263a51; }
 [data-testid="stForm"] { background: #101b2bcc; border: 1px solid #263a51; border-radius: 16px; }
 button[kind="primary"] { color:#06211d; font-weight:700; border-radius:9px; }
-.rx-brand { display:flex; align-items:center; gap:12px; font-size:24px; font-weight:750; letter-spacing:-1px; }
-.rx-logo { display:grid; place-items:center; width:40px; height:40px; border:1px solid #31d5bc;
-  color:#31d5bc; background:#123231; border-radius:12px; font-size:21px; }
 .rx-eyebrow { color:#31d5bc; text-transform:uppercase; letter-spacing:.2em; font-size:.7rem; font-weight:700; }
 .rx-hero { border:1px solid #2b435c; border-radius:18px; padding:26px 30px; margin:0 0 26px;
  background:linear-gradient(115deg,#132a3d,#112031 65%,#153f40); }
@@ -161,230 +153,6 @@ def page_overview():
             st.caption(read_json(exps[0] / "analysis.json")["headline"])
         else:
             st.markdown(badge(None) + " **Benchmark**", unsafe_allow_html=True)
-
-
-QUICK_RECOVERY_METHODS = {
-    'Smart Recovery (CART + fallback)': 'smart',
-    'TSK only': 'tsk',
-    'PhotoRec only': 'photorec',
-    'TSK + PhotoRec (both)': 'combined',
-    'Conservative (CART advice)': 'cart',
-    'Conservative (rule-v1 advice)': 'rule',
-}
-QUICK_RECOVERY_METHOD_HELP = {
-    'smart': 'CART chooses the initial strategy (rule-v1 if unavailable). If a single engine fails or finds no files, the other engine is tried.',
-    'tsk': 'Run The Sleuth Kit only. PhotoRec will not run automatically.',
-    'photorec': 'Run PhotoRec only. TSK recovery will not run automatically.',
-    'combined': 'Run both TSK and PhotoRec, then combine results without changing the source image.',
-    'cart': 'CART advises the conservative strategy, which runs both engines.',
-    'rule': 'Rule-v1 advises the conservative strategy, which runs both engines.',
-}
-
-def local_file_picker() -> str | None:
-    """Use an OS-native file picker on the local desktop (Windows or Kali)."""
-    if os.name == 'nt':
-        try:
-            import tkinter as tk
-            from tkinter import filedialog
-            root = tk.Tk()
-            root.withdraw()
-            root.attributes('-topmost', True)
-            try:
-                selected = filedialog.askopenfilename(
-                    parent=root, title='Select RecoverX disk image',
-                    filetypes=[('Disk images', '*.img *.dd *.raw *.bin *.001'),
-                               ('All files', '*.*')])
-                return selected or None
-            finally:
-                root.destroy()
-        except Exception:
-            return None
-    if not os.environ.get('DISPLAY'):
-        return None
-    zenity = shutil.which('zenity')
-    kdialog = shutil.which('kdialog')
-    if zenity:
-        cmd = [zenity, '--file-selection', '--title=Choose forensic disk image',
-               '--file-filter=Disk images | *.img *.dd *.raw *.bin *.001',
-               '--file-filter=All files | *']
-    elif kdialog:
-        cmd = [kdialog, '--getopenfilename', str(Path.home()),
-               'Disk images (*.img *.dd *.raw *.bin *.001)']
-    else:
-        return None
-    try:
-        r = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
-        return r.stdout.strip() if r.returncode == 0 else None
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-
-
-def page_quick():
-    st.title('RecoverX · Quick Recovery')
-    st.caption('Choose an existing disk image or case, then run analysis + recovery automatically. '
-               'Evidence is read-only. Files are saved to a separate case directory.')
-
-    if os.name != 'nt':
-        with st.expander('Optional: Capture an image from an unmounted test disk (Linux)', expanded=False):
-            st.warning('This creates a read-only COPY of the selected disk/partition. It never formats, '
-                       'deletes, or mounts a device. Always inspect the device path and size, and obtain permission. '
-                       'A graphical administrator password prompt may appear.')
-            if st.button('Refresh safe unmounted devices'):
-                try:
-                    st.session_state['quick_devices'] = candidate_devices()
-                except (AcquisitionError, OSError, ValueError) as e:
-                    st.error(str(e))
-            devices = st.session_state.get('quick_devices', [])
-            if devices:
-                labels = {f"{x['path']} — {x['size']/2**30:.2f} GiB — {x['fstype']} ({x['type']})": x['path']
-                          for x in devices}
-                chosen = st.selectbox('Unmounted source device (never the system disk)', list(labels))
-                permission = st.checkbox('I own or am authorized to examine the selected device, and '
-                                         'I confirmed it is NOT my system disk.', key='quick_acquire_authorized')
-                if st.button('Capture read-only image', disabled=not permission):
-                    try:
-                        with st.spinner('Creating a byte-for-byte image on a separate disk. Do not disconnect the source…'):
-                            img = capture_device(labels[chosen])
-                        st.session_state.pop('quick_last_case_id', None)
-                        st.session_state['quick_img'] = str(img)
-                        st.success(f'Image captured: {img}')
-                    except AcquisitionError as e:
-                        st.error(str(e))
-            else:
-                st.caption('Press Refresh to discover unmounted non-system devices. '
-                           'Mounted devices and disks containing mounted partitions are excluded.')
-    if os.name == 'nt':
-        missing = [tool for tool in ('tsk_recover', 'fls', 'fsstat', 'mmls')
-                   if not resolve_tool(tool)]
-        if missing:
-            st.error('Recovery tools missing: ' + ', '.join(missing)
-                     + '. Run SETUP_WINDOWS.cmd from the RecoverX folder first.')
-        st.caption('PhotoRec uses TestDisk installed in the default non-root WSL distribution.')
-        st.info('Windows version works with RAW disk images (.img/.dd/.raw/.bin). '
-                'It does not directly capture a physical USB or system disk. '
-                'Create the image with a trusted disk-imaging tool first, then select it here.')
-
-    existing = list_cases()
-    source = st.radio('Source', ['New disk image', 'Existing case'] if existing else ['New disk image'],
-                      horizontal=True)
-    image_path = None
-    case_id = None
-    label = examiner = ''
-    authorized = False
-    if source == 'New disk image':
-        c1, c2 = st.columns([4, 1])
-        # Render the button before the keyed input: Streamlit otherwise rejects
-        # updating that widget's session-state value on the same rerun.
-        with c2:
-            if st.button('Browse…', help='Opens the local file picker'):
-                chosen = local_file_picker()
-                if chosen:
-                    st.session_state.pop('quick_last_case_id', None)
-                    st.session_state['quick_img'] = chosen
-                    st.rerun()
-                else:
-                    st.info('File picker cancelled or unavailable. Paste the full disk image path.')
-        with c1:
-            image_path = st.text_input('Disk image path (.img/.dd/.raw)', key='quick_img', on_change=lambda: st.session_state.pop('quick_last_case_id', None),
-                                       placeholder='C:\\Users\\YourName\\Downloads\\evidence.img' if os.name == 'nt' else '/home/kali/Downloads/evidence.img')
-        label = st.text_input('Case label', value='Quick Recovery', key='quick_label')
-        examiner = st.text_input('Examiner (optional)', key='quick_examiner')
-        authorized = st.checkbox('I confirm this is an authorized evidence copy designated for analysis.',
-                                 key='quick_authorized')
-        st.caption('A JPEG or folder is not a disk image. To recover a deleted file, supply '
-                   'an image containing the original filesystem and deleted-data remnants.')
-    else:
-        labels = {f"{x['case_id']} — {x.get('label') or Path(x['image_path']).name}": x['case_id']
-                  for x in existing}
-        case_id = labels[st.selectbox('Existing case', list(labels))]
-        st.caption('The saved image baseline will be checked again before analysis/recovery.')
-
-    method_choice = st.selectbox('Recovery strategy', list(QUICK_RECOVERY_METHODS),
-                                 key='quick_recovery_method')
-    method = QUICK_RECOVERY_METHODS[method_choice]
-    st.caption(QUICK_RECOVERY_METHOD_HELP[method])
-    if method in ('smart', 'cart') and not active_model_dir():
-        st.info('No active CART model. The selector will use rule-v1 instead.')
-        if bundled_model_dir() and st.button('Install CART from bundled evaluation records'):
-            install_bundled_model()
-            st.rerun()
-    st.warning('The run may take time on large disks. Do not close this browser tab during recovery. '
-               'Source media and disk image remain unchanged; output is stored separately.')
-    if st.button('Analyze + recover', type='primary',
-                 disabled=(source == 'New disk image' and (not image_path or not authorized))
-                          or (os.name == 'nt' and bool(missing))):
-        with st.status('Running guided recovery…', expanded=True) as status:
-            try:
-                rec, run = guided_recovery(image_path=image_path if source == 'New disk image' else None,
-                                           case_id=case_id, authorized=authorized,
-                                           examiner=examiner, label=label,
-                                           method=method, progress=lambda event: st.write(event.get('detail', event['stage'])))
-                status.update(label=f"Recovery {run['status']}",
-                              state='complete' if run['status'] == 'completed' else 'error')
-                if source == 'New disk image':
-                    st.session_state['quick_last_case_id'] = rec['case_id']
-            except (RecoverXError, OSError, ValueError) as e:
-                st.error(f'Quick Recovery could not finish: {e}')
-                status.update(label='Quick Recovery stopped', state='error')
-    recent_id = case_id or st.session_state.get('quick_last_case_id')
-    if recent_id:
-        try:
-            case = open_case(recent_id)
-            rec = case.load()
-            if rec['runs']:
-                run = rec['runs'][-1]
-                st.subheader('Latest recovery results')
-                c = st.columns(4)
-                c[0].metric('Strategy used', run['selection']['strategy_used'])
-                c[1].metric('Total outputs', run['metrics']['outputs'])
-                c[2].metric('Distinct contents', len(run['canonical_files']))
-                c[3].metric('Image unchanged', 'Yes' if run['source_unchanged'] else 'NO')
-                if run.get('error'):
-                    st.error(run['error'])
-                if run['selection'].get('engines_attempted'):
-                    st.caption('Engines attempted in order: ' + ' → '.join(run['selection']['engines_attempted']))
-                if run['selection'].get('engine_fallback'):
-                    st.warning(run['selection']['engine_fallback'])
-                if run['selection'].get('fallback'):
-                    st.warning(run['selection']['fallback'])
-                st.caption('Recovered outputs are not proof of exact reconstruction unless the original '
-                           'hash (or ground truth) is available and matches.')
-                all_files = [(engine, f) for engine in run['engine_runs'] for f in engine['files']]
-                unique = []
-                hashes = set()
-                for engine, f in all_files:
-                    if f['sha256'] not in hashes:
-                        unique.append((engine, f))
-                        hashes.add(f['sha256'])
-                if unique:
-                    st.dataframe(pd.DataFrame([{'engine': f['engine'],
-                                                'name': f['recovered_name'],
-                                                'size': f['size'], 'sha256': f['sha256'],
-                                                'verification': f['integrity_state']}
-                                               for _, f in unique]),
-                                 hide_index=True, use_container_width=True)
-                    st.subheader('Save a recovered file')
-                    st.warning('Recovered files may contain malicious data. Download only files you trust; '
-                               'RecoverX never opens or executes their contents.')
-                    selected = st.selectbox('Recovered content', range(len(unique)),
-                        format_func=lambda i: f"{unique[i][1]['recovered_name']} ({unique[i][1]['engine']}, "
-                                              f"{unique[i][1]['size']:,} bytes)", key='quick_download_item')
-                    engine, f = unique[selected]
-                    path = safe_join(engine['output_dir'], f['relative_path'])
-                    if not path.is_symlink() and path.is_file() and path.stat().st_size <= 40 * 1024 * 1024:
-                        st.download_button('Download selected file', path.read_bytes(),
-                                           file_name=Path(f['recovered_name']).name,
-                                           mime='application/octet-stream')
-                    else:
-                        st.info('This file is unavailable or larger than 40 MiB. '
-                                'Find it in the saved case run output folder.')
-                st.download_button('Download PDF forensic report', generate_case_pdf(case),
-                                   file_name=f"{rec['case_id']}_report.pdf", mime='application/pdf')
-                st.info('Recovered files are saved in the case run output directory. '
-                        'No automatic writing to the original disk occurs.')
-                st.code(str(case.runs_dir() / run['run_id']))
-        except (RecoverXError, FileNotFoundError) as e:
-            st.error(str(e))
 
 
 def page_cases():
@@ -805,25 +573,29 @@ def page_diagnostics():
         st.markdown(f"Model: `{d['model'] or 'none'}`  \nDatasets: {d['datasets'] or 'none'}  \nExperiments: {d['experiments'] or 'none'}")
 
 
+ADVANCED_PAGES = {"Overview": page_overview, "Case Management": page_cases, "Forensic Analysis": page_analysis,
+                  "Intelligent Recovery": page_recovery, "Recovered Files": page_files, "Model Training": page_training,
+                  "Benchmark Laboratory": page_benchmark, "Evidence & Audit": page_audit,
+                  "Settings & Diagnostics": page_diagnostics}
+
+
 def main():
-    st.set_page_config(page_title="RecoverX", page_icon="🔎", layout="wide", initial_sidebar_state="auto")
-    st.markdown(CSS, unsafe_allow_html=True)
-    with st.sidebar:
-        st.markdown('<div class="rx-brand"><span class="rx-logo">R×</span>RecoverX</div>', unsafe_allow_html=True)
-        st.caption("FORENSIC RECOVERY WORKSPACE")
-        st.divider()
-        advanced = st.checkbox('Show advanced pages', value=os.name != 'nt')
-        page = st.radio("Navigate", PAGES if advanced else PAGES[:1], label_visibility="collapsed")
-        st.divider()
-        st.caption(f"v{__version__} · LOCAL OPERATIONS")
-        st.caption("TSK + PhotoRec + interpretable CART")
-        st.caption("Metadata only · No evidence uploads")
-    pages = {"Quick Recovery": page_quick, "Overview": page_overview, "Case Management": page_cases, "Forensic Analysis": page_analysis,
-     "Intelligent Recovery": page_recovery, "Recovered Files": page_files, "Model Training": page_training,
-     "Benchmark Laboratory": page_benchmark, "Evidence & Audit": page_audit,
-     "Settings & Diagnostics": page_diagnostics}
+    icon = PROJECT_ROOT / "assets" / "recoverx.png"
+    st.set_page_config(page_title="RecoverX — Quick Recovery", page_icon=str(icon) if icon.is_file() else "🛡️",
+                       layout="wide", initial_sidebar_state="collapsed")
     try:
-        pages[page]()
+        quick_app.render()
     except (OSError, ValueError, RecoverXError) as exc:
         st.error(f"Unable to complete this operation: {exc}")
-        st.caption("Check the selected path, file permissions and Settings & Diagnostics. Existing case data is preserved.")
+        st.caption("Existing case data is preserved. Check the selected paths and the installation guide.")
+    # Expert tools stay available on the same page (no sidebar, no separate main workflow).
+    if st.toggle("Advanced workspace — case management, research laboratory and diagnostics", key="rx_advanced"):
+        st.markdown(CSS, unsafe_allow_html=True)
+        page = st.selectbox("Advanced tool", list(ADVANCED_PAGES), key="rx_advanced_page")
+        try:
+            ADVANCED_PAGES[page]()
+        except (OSError, ValueError, RecoverXError) as exc:
+            st.error(f"Unable to complete this operation: {exc}")
+            st.caption("Check the selected path, file permissions and Settings & Diagnostics. Existing case data is preserved.")
+    st.markdown(f'<div class="rx-foot">RecoverX v{__version__} · local-only · evidence is opened read-only · '
+                'recovered files are never executed</div>', unsafe_allow_html=True)

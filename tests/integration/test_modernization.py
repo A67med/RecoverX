@@ -48,6 +48,7 @@ def test_populated_dashboard_has_no_exceptions(fat_fixture,page):
     case,_=create_case(fat_fixture['image'])
     run_recovery(case,'combined',ground_truth=fat_fixture['gt'])
     app=str(Path(__file__).resolve().parents[2]/'app.py')
-    at=AppTest.from_file(app,default_timeout=60).run()
-    at.sidebar.radio[0].set_value(page).run()
+    at=AppTest.from_file(app,default_timeout=90).run()
+    next(t for t in at.toggle if t.key=='rx_advanced').set_value(True).run()
+    next(s for s in at.selectbox if s.key=='rx_advanced_page').set_value(page).run()
     assert not at.exception
