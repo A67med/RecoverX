@@ -1,154 +1,212 @@
-# RecoverX v0.4.0
+<div align="center">
 
-**Recover deleted files from USB flash drives and raw disk images — with read-only imaging,
-SHA-256 evidence integrity, The Sleuth Kit, PhotoRec and an interpretable CART strategy selector.**
+<img src="assets/recoverx.svg" width="88" alt="RecoverX logo">
 
-RecoverX is a local Windows / Linux application (Python 3.12 + Streamlit). Version 0.4 adds
-**direct USB acquisition on Windows** — no FTK Imager or other imaging tool is needed — and a
-redesigned single-page **Quick Recovery** interface.
+# RecoverX
 
-> **Hardware status:** the USB discovery layer was run read-only against this machine's real disks,
-> and the imaging algorithm is tested with file-backed and fault-injecting sources. Imaging a physical
-> USB flash drive end-to-end **has not yet been verified on real USB hardware**. v0.4.0 is therefore
-> published as a **pre-release**. Please follow [the disposable-USB test procedure](docs/USB_RECOVERY_TESTING.md)
-> before relying on USB acquisition.
+**Auditable deleted-file recovery for digital forensics — The Sleuth Kit and PhotoRec under one
+evidence-preserving workflow, with an interpretable CART strategy recommender.**
 
-## Quick Recovery in five steps
+[![CI](https://github.com/A67med/RecoverX/actions/workflows/ci.yml/badge.svg)](https://github.com/A67med/RecoverX/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.11%E2%80%933.13-3776AB)
+![Platforms](https://img.shields.io/badge/platform-Windows%2010%2F11%20%7C%20Linux-informational)
+![License](https://img.shields.io/badge/license-MIT%20(provisional)-lightgrey)
 
-| Step | What happens |
+</div>
+
+RecoverX recovers deleted files from raw disk images and USB media by combining two
+complementary techniques: **metadata-based recovery** with The Sleuth Kit (TSK), which follows
+residual file-system records and keeps original names, and **signature-based carving** with
+PhotoRec, which reconstructs files from content when metadata is gone. Every run is wrapped in
+the controls an examiner needs: the evidence is hashed before and after, engines write to
+isolated output folders, outputs are deduplicated by SHA-256 without deleting anything, and each
+decision is written to an append-only case log.
+
+RecoverX is also a research project. It asks whether a small decision tree, fed features that
+TSK reports *before* recovery, can choose the right strategy per image. The evaluation data and
+scripts are in [`research/`](research/).
+
+<p align="center">
+  <img src="docs/images/01-workspace.png" width="49%" alt="Recovery Studio workspace">
+  <img src="docs/images/03-results.png" width="49%" alt="Recovered files with hash matches">
+</p>
+
+## Capabilities
+
+| Area | What RecoverX does |
 |---|---|
-| **1 · Select source** | *USB drive*: RecoverX lists connected disks with name, drive letters, filesystem, capacity, serial and physical disk number. Only removable USB/SD disks that are not system, boot, page-file or RecoverX disks can be selected. *Disk image file*: a raw `.img/.dd/.raw/.bin/.001`, or the image of a previous case. |
-| **2 · Recovery method** | Smart Recovery · TSK only · PhotoRec only · TSK + PhotoRec · Automatic (CART only) · Automatic (rule-v1 only). |
-| **3 · Output folder** | Must be on a **different physical disk** from the USB source; free space, write permission and disk identity are checked. |
-| **4 · Start** | USB: a confirmation dialog shows the exact disk identity, then Windows asks for administrator permission (UAC) **only for the imaging worker**. Live progress shows bytes copied, throughput, unreadable sectors, then each real recovery stage. Cancel at any time. |
-| **5 · Results** | Recovered files with original names (when metadata survives), type, size, SHA-256, structural validation, duplicate merging, optional known-hash comparison, safe thumbnail preview, download, PDF + JSON reports and the full audit trail. |
+| Sources | Raw disk images (`.img`, `.dd`, `.raw`); USB drives on Windows through a read-only acquisition into a hashed case image (MBR, EBR, GPT, superfloppy; 512 B and 4Kn sectors). |
+| Recovery strategies | **File records** (TSK `tsk_recover`), **Signature scan** (PhotoRec), **Both engines** (TSK then PhotoRec, merged by hash), **Smart** (CART recommendation with fallback), plus rule-v1 and CART-only for evaluation. |
+| Evidence integrity | SHA-256 of the source before and after every run; a changed source marks the run `evidence_changed`; outputs never inside or over the evidence; no engine writes to the source. |
+| Review & export | Gallery/list review, type filters, original-hash matching from a supplied manifest, structural validation of common formats, verified export with a receipt, PDF/JSON/CSV case reports. |
+| Research | Controlled synthetic corpus generator with per-file ground truth, pre-specified labelling objective, CART training with grouped model selection, benchmark and statistics pipeline. |
 
-Logs, model predictions, engine commands, partition analysis, the acquisition record and the
-audit trail are in expandable sections. Expert tools (case management, research laboratory,
-diagnostics) stay available behind the *Advanced workspace* switch at the bottom of the page.
+Two front ends share one recovery core (`src/recoverx`):
 
-## Direct USB acquisition (Windows)
+* **Recovery Studio** — native Windows desktop (WPF, .NET Framework 4.8) with a bundled Python
+  worker; runs offline without WSL or a system Python.
+* **Web workspace** — cross-platform Streamlit interface (Linux, Kali, Windows with WSL for
+  PhotoRec), including the research dashboard.
 
-* Discovery uses documented Win32 IOCTLs on **zero-access** handles (disk number, size, sector size,
-  bus type, vendor/product/serial) and `IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS` to map every drive
-  letter to its physical disk(s) — this also works for dynamic/spanned volumes. The Windows Storage
-  CIM classes add friendly names, `IsSystem`/`IsBoot` flags and partition offsets.
-* The source is opened as `\\.\PhysicalDriveN` with **`GENERIC_READ` only**. RecoverX never formats,
-  initialises, locks, dismounts or writes to the source; the code cannot request write access.
-* Immediately before imaging, the device identity (number, size, serial, bus, vendor, product,
-  sector size) is re-checked by the elevated worker; any change blocks acquisition.
-* Data is streamed in bounded 1 MiB, sector-aligned reads into a **new** `.img` created with
-  exclusive-create on another physical disk. SHA-256 is computed while reading
-  (**source-stream hash**), the image is re-read from the destination (**image hash**) and they must
-  match. An optional second full read of the USB drive (**source re-read hash**) detects a changing source.
-* Unreadable sectors are retried sector-by-sector, zero-filled and listed; such an image is
-  *completed with errors* and recovery is **not** started automatically. Cancellation, disconnection
-  and failures leave a `*.img.partial` file that can never be registered as evidence.
-* Partition tables (MBR, extended, GPT, "superfloppy" without a table) are recorded with byte and
-  TSK sector offsets; TSK recovers every partition at its offset.
-* After a verified acquisition, a case is created (its SHA-256 must equal the acquisition hash)
-  and recovery starts automatically.
+## How it works
 
-**Important limitation:** opening a disk read-only does **not** stop Windows, Explorer, antivirus or
-other programs from writing to its mounted volumes. Close programs using the drive, do not browse it
-during imaging, and use a hardware write blocker or the media's write-protect switch when write
-protection must be guaranteed.
+```mermaid
+flowchart LR
+    SRC[Image or USB<br/>read-only] --> H0[SHA-256<br/>baseline]
+    H0 --> META[TSK mmls / fsstat / fls<br/>pre-recovery analysis]
+    META --> FEAT[11 features]
+    FEAT --> SEL{Strategy<br/>CART · rule · examiner}
+    SEL -->|metadata| TSK[tsk_recover]
+    SEL -->|carving| PR[PhotoRec]
+    SEL -->|both| TSK & PR
+    TSK --> INV[Inventory · SHA-256 · dedup<br/>known-hash matching]
+    PR --> INV
+    INV --> H1[SHA-256 re-check]
+    H1 --> OUT[Case record · report · verified export]
+```
 
-## Install on Windows 10/11 (64-bit)
+**Metadata recovery vs. carving.** TSK restores complete files with names and paths when
+directory entries survive (e.g., FAT deletions of contiguous files) but has nothing to follow on
+ext4, where deletion clears extent pointers, or after a quick format. PhotoRec still works there
+but loses names, struggles with fragmentation and produces candidates that need validation.
+Running both maximises recall at extra cost.
 
-Full non-technical guide: **[docs/WINDOWS_INSTALL.md](docs/WINDOWS_INSTALL.md)**.
+**CART strategy selection.** The selector uses eleven features computed from TSK output before
+any recovery (file system detected, FAT/ext family, partition table, image size, allocated and
+deleted entry counts, deleted entries that still carry a size, reallocation flags). Training
+labels are derived from measured runs: *the cheapest strategy whose exact-file recall is within
+0.05 of the best* (objective frozen in [`config/objective.json`](config/objective.json)). A CART
+tree (Gini impurity, depth and leaf size chosen on a validation split) maps the features to a
+strategy, and every prediction is recorded with its decision path. The shipped model is a single
+split — `n_deleted_named ≤ 4.5 → PhotoRec, otherwise TSK` — exported to JSON so the desktop needs
+neither scikit-learn nor unpickling.
 
-1. Install **Python 3.12 (64-bit)** — `py install 3.12` or the python.org Windows installer.
-2. Optional, for PhotoRec: install WSL 2 with Ubuntu and `testdisk` (setup offers to install
-   `testdisk` into an existing distribution only after you type **Y**; it never installs WSL itself).
-3. Double-click **`SETUP_WINDOWS.cmd`**. It finds Python 3.12, downloads the official Sleuth Kit 4.15.0
-   ZIP (SHA-256 verified) and checks that `tsk_recover.exe` really runs, (re)builds the private `.venv`
-   with tested package versions, activates the bundled CART model, checks PhotoRec in WSL and creates
-   a **RecoverX** desktop shortcut. It never elevates and never touches disks.
-4. Double-click the **RecoverX** desktop icon (or `START_RECOVERX_WINDOWS.cmd`). RecoverX opens in its
-   own app window (Microsoft Edge/Chrome app mode, or your default browser) on `127.0.0.1` only.
+> **What the evaluation found.** On controlled FAT16/FAT32/ext4 images of 48 MiB–1 GiB, the CART
+> selector recovered about as much as running both engines and more than the hand-written rule,
+> but it was **not faster** than running both, because the metadata analysis it needs costs about as
+> much as the work it avoids. The web workspace therefore treats the recommendation as advisory
+> and runs both engines in automatic modes unless an examiner or researcher opts out.
 
-Data and audit records are stored in `%LOCALAPPDATA%\RecoverX`; recovered files, reports and USB
-images go to the output folder you choose.
+## Requirements
 
-## Linux / WSL / Kali
+| Use | Requirements |
+|---|---|
+| Recovery Studio (Windows) | Windows 10/11 x64, .NET Framework 4.8 (built in), about 170 MB installed, free space for the case image and recovered files. |
+| Web workspace (Linux/Kali) | Python 3.11–3.13, `sleuthkit`, `testdisk` (PhotoRec). |
+| Web workspace (Windows) | Python 3.12 x64; TSK is downloaded by setup; PhotoRec runs through WSL (Ubuntu with `testdisk`). |
+| Research experiments | Linux with root (loop mounts), `mtools`, `dosfstools`, `e2fsprogs`. |
+
+## Installation
+
+### Recovery Studio (Windows desktop)
+
+```powershell
+git clone https://github.com/A67med/RecoverX.git
+cd RecoverX
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows\provision_desktop.ps1
+.\RecoverX.exe
+```
+
+The provisioning script downloads CPython 3.12.7 (embeddable), pytsk3, The Sleuth Kit 4.15.0 and
+TestDisk/PhotoRec 7.2 from their official publishers, **verifies each against a pinned SHA-256**,
+and compiles `RecoverX.exe` with the .NET Framework compiler. To produce a portable ZIP and the
+per-user installer:
+
+```powershell
+.\runtime\python.exe -B packaging\make_zip.py C:\build\RecoverX-Windows-x64.zip
+powershell -NoProfile -File packaging\build-setup.ps1 -Archive C:\build\RecoverX-Windows-x64.zip -Destination C:\build\RecoverX-Setup-x64.exe
+```
+
+### Web workspace (Linux / Kali)
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y python3-venv sleuthkit testdisk dosfstools e2fsprogs mtools
-python3 -m venv .venv
-.venv/bin/python -m pip install -e '.[dev]'
+sudo apt install sleuthkit testdisk
+python3 -m venv .venv && .venv/bin/pip install -e .
 .venv/bin/python -m streamlit run app.py
 ```
 
-On Linux the *USB drive* source images an **unmounted, non-system** device through polkit (`pkexec dd`)
-and then recovers from that image. Kali users can run `bash INSTALL_ON_KALI.sh` for a menu launcher.
+`bash scripts/linux/install_desktop_entry.sh` adds a menu launcher. On Windows, the web workspace
+is set up by `scripts\windows\setup_streamlit.cmd` and started with `scripts\windows\start_streamlit.cmd`
+(see [`docs/WINDOWS_INSTALL.md`](docs/WINDOWS_INSTALL.md)).
 
-## Recovery methods
+## Usage
 
-| Method | Engines executed | Selection |
-|---|---|---|
-| Smart Recovery | CART's recommended strategy; if a single engine fails or finds nothing, the other engine runs | CART model (rule-v1 fallback, logged) |
-| TSK only | TSK only | fixed |
-| PhotoRec only | PhotoRec only | fixed |
-| TSK + PhotoRec | TSK then PhotoRec | fixed |
-| Automatic (CART only) | both engines (preservation policy); CART recommendation logged | trained CART model (must be installed) |
-| Automatic (rule-v1 only) | both engines (preservation policy); rule-v1 recommendation logged | frozen rule-v1 |
+1. **Choose a source** — a connected USB drive (Windows desktop), an existing raw image, or the
+   built-in *Validation sample* (three known deleted files).
+2. **Choose a method** — Smart, File records (TSK), Signature scan (PhotoRec) or Both engines.
+   Optionally load a manifest of original SHA-256 hashes.
+3. **Confirm and start** — USB sources are first acquired read-only into a hashed `evidence.img`.
+   Only the acquisition helper asks for elevation.
+4. **Review** — filter, preview and select files; each row shows the engine(s) and whether the
+   content matches a known original.
+5. **Export** — copies are verified by hash; a receipt and the case report are written next to them.
 
-TSK restores deleted files from filesystem metadata and keeps their names and folders (FAT replaces
-the first character of a deleted name, e.g. `_oliday.jpg`). PhotoRec carves file signatures from
-unallocated space when metadata is gone; names are not preserved. Every recommendation, fallback,
-safety override and engine run is written to the case event log and reports.
+Validate any desktop installation with the bundled checks (synthetic images only):
 
-## Results, validation and reports
-
-* **Success is reported only** when the run completed, the evidence hash is unchanged before and after,
-  and at least one recovered file was copied to the output folder with a matching SHA-256.
-  "No files found", partial, blocked, cancelled and failed runs are reported as such.
-* Structural validation (JPEG markers, PNG IEND, PDF `%%EOF`, ZIP/DOCX/XLSX/PPTX central directory
-  and CRCs) marks files *valid / invalid / not checked*. This is a plausibility check; **exactness is
-  proven only by matching a known original SHA-256**, which you can paste in step 4.
-* Exports: `recovered/` (one copy per distinct SHA-256; duplicates listed), `RecoverX-report.pdf`,
-  `manifest.json`, `inventory.csv`, `export.json`. Recovered files are never opened or executed;
-  previews are decoded-and-re-encoded thumbnails.
-
-## Verified in this release
-
-* Windows 11, Python 3.12.10: `SETUP_WINDOWS.cmd` (non-interactive) installed and executed Sleuth Kit 4.15.0,
-  found PhotoRec 7.1 in WSL, activated the CART model and created the shortcut.
-* Native Windows end-to-end smoke test (`scripts/smoke_e2e.py`): a FAT16 image with a **deleted JPG and PDF**
-  was recovered by **all six methods** with exact SHA-256 matches; the image hash was unchanged.
-* The same recovery driven through the UI in a browser (TSK + PhotoRec): 2 files recovered, structurally
-  valid, copies hash-verified.
-* Automated tests: Windows 137 passed / 35 skipped (tool-dependent tests are marked *BLOCKED* on Windows);
-  Ubuntu 24.04 (WSL) with real TSK 4.12 / PhotoRec 7.1 — 168 passed, 4 skipped (Windows-only and optional
-  PyMuPDF tests). See
-  [CHANGELOG.md](CHANGELOG.md).
-* **Not verified:** imaging a physical USB flash drive (no USB hardware was available to the test run).
-
-## Measured ML results and research limits (unchanged from v0.3.0)
-
-Re-evaluation used only existing synthetic feature/label records: **60 training, 12 validation, 24 test images**.
-The validation-selected tree (depth 1, minimum leaf size 4) achieved **20/24 label agreement (83.3%)**,
-**56.3% balanced accuracy** and **53.9% macro F1**. Majority-class agreement was 75%; rule-v1 was 70.8%.
-These are **strategy-label metrics on synthetic images**, not recovered-file success rates or real-media
-accuracy. See [the verification record](docs/modernization_verification.md).
-
-## Verify
-
-```bash
-.venv/bin/python -m pytest -q            # Windows: .venv\Scripts\python -m pytest -q
-.venv/bin/python -m ruff check src scripts tests
-python scripts/smoke_e2e.py --workdir <empty folder>   # real-engine end-to-end smoke test
+```powershell
+.\runtime\python.exe -B validation\make_fixture.py
+.\Run` validation.cmd
 ```
 
-## Safety and operational limits
+## Development
 
-Use image copies and write blockers when enforceable write protection is required. Hashes detect changes
-but cannot prevent them. The event log supports auditability; it is not a signed legal chain of custody.
-The application is a trusted **single-user local workspace** bound to `127.0.0.1`; do not expose its port.
-Keep evidence, recovered files and reports out of Git.
+```bash
+pip install -e ".[dev]"
+python -m ruff check src scripts tests desktop validation research/experiments
+python -m pytest -q          # real-engine tests run when tsk_recover/photorec are installed
+```
 
-See [Windows install](docs/WINDOWS_INSTALL.md), [USB test procedure](docs/USB_RECOVERY_TESTING.md),
-[architecture](docs/architecture.md), [methodology](docs/methodology.md),
-[installation and troubleshooting](docs/installation_and_user_guide.md) and [CHANGELOG](CHANGELOG.md).
+CI runs the suite on Ubuntu (Python 3.11–3.13, real TSK/PhotoRec) and on Windows, where it also
+provisions the desktop dependencies, builds `RecoverX.exe` and runs the engine validation checks.
+
+## Scientific reproducibility
+
+[`research/`](research/) contains the corpus manifests, the original benchmark (`results/exp1`),
+and the scripts and records of the 2026-11 study (replication, 192 fresh images, scaling;
+6,408 runs with per-run CPU and memory). `research/experiments/paper_2026_11/run_all.sh`
+regenerates the synthetic images and reruns everything; the statistics scripts recompute the
+reported numbers from the saved records. Re-running on the consolidated code reproduced the
+recovery outcome of every image/strategy cell exactly.
+
+## Project structure
+
+```
+src/recoverx/        recovery core: engines, forensic case store, ML selector, orchestrator,
+                     USB acquisition (Windows), reporting, Streamlit UI, benchmarking
+desktop/             Windows desktop scan worker (Python, runs in the embedded runtime)
+native/              Recovery Studio WPF sources, build script, PhotoRec/pytsk3 build helpers
+packaging/           ZIP packager and per-user installer
+validation/          synthetic MBR/FAT32 fixture, engine checks, desktop GUI checks
+scripts/             provisioning, launchers (windows/, linux/), training and benchmark CLIs
+config/              pre-specified labelling objective
+research/            datasets, models, experiments and results
+docs/                architecture, methodology, installation, testing, releases, images
+tests/               unit, integration and security tests
+licenses/            third-party licence texts
+```
+
+## Third-party software
+
+RecoverX runs **unmodified** The Sleuth Kit and PhotoRec as separate programs and uses CPython,
+pytsk3, scikit-learn, NumPy, SciPy, pandas, Pillow, Streamlit, Plotly and ReportLab. No third-party
+binaries are stored in this repository. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+## License
+
+RecoverX's own code is distributed under the terms in [`LICENSE`](LICENSE) (MIT, marked
+provisional by the project team). The recovery tools keep their own licences (TSK: CPL/IBM/GPL
+components; PhotoRec: GPL-2.0-or-later).
+
+## Known limitations
+
+* Physical USB acquisition on Windows is implemented but **has not yet been validated on real
+  hardware**; the desktop checks use mock and file-backed sources. Software read-only access does
+  not replace a hardware write-blocker.
+* The evaluation uses synthetic, small FAT16/FAT32/ext4 images; NTFS, exFAT, SSD/TRIM and real
+  casework media were not benchmarked. Treat the CART recommendation as advisory.
+* TSK 4.x can stop with “Invalid address in run” on some deleted FAT32 entries whose recorded
+  run extends past the volume; RecoverX reports such runs as failed with their partial output.
+* The desktop and installer are unsigned. The official PhotoRec Windows build is started as
+  invoker; a native MinGW build can be produced from source with `native/build_photorec.py`.
+* RecoverX is not a validated forensic tool in the sense of NIST CFTT; verify results
+  independently before relying on them.

@@ -2,6 +2,45 @@
 
 All notable changes to RecoverX. Dates are UTC.
 
+## [Unreleased] — repository consolidation
+
+No new version number is assigned; the Python package remains 0.4.0 and the Windows desktop
+identifies itself as Recovery Studio 1.0 RC1 (as built before consolidation).
+
+### Added
+- **Native Windows desktop (Recovery Studio 1.0 RC1)** merged from the separately developed RC1
+  bundle: WPF front end (`native/`), partition-aware scan worker (`desktop/`), unelevated reader with a
+  narrow elevated acquisition helper, MBR/EBR/GPT/4Kn layout reader, gallery/list review and verified
+  export, installer (`packaging/`), validation fixture and checks (`validation/`).
+- `scripts/windows/provision_desktop.ps1`: downloads CPython 3.12.7 embeddable, pytsk3 20260715,
+  The Sleuth Kit 4.15.0 (Windows), TestDisk/PhotoRec 7.2 (Windows) and the corresponding source
+  archives from their official publishers, verifies pinned SHA-256 values, and builds `RecoverX.exe`.
+- Portable JSON export of the archived CART model (`research/results/exp1/models/.../portable-tree.json`)
+  used by the desktop worker without scikit-learn or unpickling.
+- `research/experiments/paper_2026_11/` and `research/results/paper_2026_11/`: scripts and run records of
+  the replication (E1), fresh-seed evaluation (E2) and scaling (E3) experiments (6,408 recovery runs).
+- `THIRD_PARTY_NOTICES.md`; licence texts in `licenses/`.
+- Tests for the merged desktop components, including end-to-end recovery of the three deleted fixture
+  files by the desktop worker with real TSK and PhotoRec.
+
+### Changed
+- Repository layout: research artefacts under `research/`, launchers under `scripts/windows` and
+  `scripts/linux`, requirement files under `requirements/`, release notes and Arabic guides under `docs/`.
+- TSK adapter passes `-i raw -b <logical sector size>` (4Kn media) and reports `tsk_recover`
+  write/recovery errors printed on stderr as a failed engine run instead of silently completing.
+- PhotoRec adapter uses a native Windows binary from `tools/photorec` when present (started as invoker,
+  because the official build requests elevation it does not need) and falls back to WSL otherwise.
+- Rule-v1 lives in `recoverx.ml.policy` and is shared by the selector and the desktop worker.
+
+### Fixed
+- Desktop worker rejected its request when the WPF host wrote a UTF-8 BOM on stdin (UTF-8 console code
+  page), which made every desktop scan fail on such systems.
+
+### Removed from version control
+- No compiled executables, embedded runtimes, third-party binaries, installers, historical archives or
+  experiment outputs are tracked; they are provisioned or regenerated (see README).
+
+
 ## [0.4.0] — 2026-11-21 (pre-release)
 
 ### Added
