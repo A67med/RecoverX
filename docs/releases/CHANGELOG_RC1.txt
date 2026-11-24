@@ -1,0 +1,54 @@
+RecoverX Recovery Studio 1.0 RC1
+
+Baseline audit
+The request referenced a v0.3 ZIP. The chat attachments contained the screenshot
+and specification. The local Downloads directory contained the matching Windows
+QuickRecovery Choose_Method PythonFix archive, and C:\RX contained the installed
+Python code and Windows tools. The release uses that archive as its baseline.
+Its SHA-256 is B0031E3886A21232AD2B46CC2D8E19516251D0375741BAB4967203137962CFB3.
+The original ZIP is included in upstream for comparison.
+
+The old desktop launcher opened Streamlit. Its acquisition module supported
+Linux block devices. Its filesystem analyzer chose the first readable partition.
+The PhotoRec adapter accepted an offset but scanned the whole image. Windows
+TSK and PhotoRec binaries were already present in the local installation.
+
+Changes
+• A native x64 WPF desktop application uses a device gallery, selectable
+  recovery cards, background scans, image previews, hash results and export.
+  The desktop runs independently of Streamlit.
+• Windows Storage Management inventory matches USB bus type, physical disk
+  number, identity, boot/system status, logical sector size and linked volumes.
+  A restricted Windows session can request elevated discovery. Device-change
+  events trigger a background refresh.
+• A narrow elevated reader pins the selected device handle, checks identity,
+  length, bus type and destination volume extents, and performs aligned reads.
+  A process-checked local named pipe transfers bytes to the ordinary desktop
+  process. The reader creates no files. Screen progress uses transferred bytes.
+• The case image gets a SHA-256 at capture and an independent read-back hash
+  before analysis. Invalid partition ranges or GPT checksums stop the scan.
+  The new layout reader handles MBR, extended partitions, GPT and raw volumes.
+  TSK receives sector size and offset. PhotoRec scans a temporary byte-exact
+  slice for each partition. Whole volumes can be scanned directly.
+• The original Python TSK and PhotoRec adapters, data models, feature schema,
+  rule-v1 policy and integrity/deduplication code are used in the desktop
+  pipeline. Windows filesystem analysis uses the x64 pytsk3 binding. The
+  original sklearn model.joblib and metadata are retained. The small portable
+  inference tree was exported from that exact pinned model and checked against
+  sklearn across both branches. No model accuracy is inferred from these tests.
+• Smart selects per partition using the original CART. If the model is
+  unavailable it uses rule-v1. A failed or empty first engine triggers the
+  other. CART only reports a model error if the tree is unavailable. Rule only
+  uses rule-v1. Fixed modes preserve their selected engine order.
+• The shipped scripted PhotoRec 7.2 CLI was built for Windows x64 from CGSecurity
+  source. The local Cygwin CLI could not start in the managed test environment.
+  The new build runs without Cygwin or WSL and includes JPEG/zlib support. It
+  uses upstream default file families and whole-partition signature searches.
+• Results keep each engine's output and group identical content for browsing.
+  Only bounded JPEG/PNG candidates are decoded for previews. Export writes
+  fresh filenames in a new directory and verifies each saved copy against the
+  scan hash. JSON reports distinguish matches to original files from export
+  verification.
+• The offline installer creates a separate per-user installation and a verified
+  desktop shortcut. The portable ZIP also contains the desktop source, Python
+  backend, trained model, fixture, automated checks and build instructions.

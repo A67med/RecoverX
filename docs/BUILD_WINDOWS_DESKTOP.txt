@@ -1,0 +1,71 @@
+RecoverX RC1 developer build
+
+From a source checkout, first provision the runtime, pytsk3, TSK, PhotoRec and
+the source archives (official downloads, pinned SHA-256) and build the desktop:
+  powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows\provision_desktop.ps1
+A packaged release ZIP already contains these built dependencies. Use a short
+local path and run the commands below from the RecoverX directory.
+
+Rebuild the WPF frontend and its desktop validation harness
+  powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\native\build.ps1
+
+The script uses the x64 .NET Framework C# compiler and WPF assemblies included
+with .NET Framework 4.8. The GUI loads the embedded Theme.xaml, Hero.xaml and
+Icons.svg resources. The shipped executable has an asInvoker manifest. Only
+the separate --reader instance requests elevation.
+
+Desktop and acquisition sources
+  native\Studio.cs, Results.cs, Theme.xaml, Hero.xaml, Icons.svg
+  native\Storage.cs, Presence.cs, Acquisition.cs
+  native\Session.cs, Program.cs
+
+Python recovery sources
+  desktop\scan.py and partitions.py
+  src\recoverx\engines, forensic, ml and recovery
+  research\results\exp1\models\cart-20261030-193546
+  validation\recovery_checks.py and make_fixture.py
+
+Rebuild the fixture from the reference originals
+  runtime\python.exe -B validation\make_fixture.py
+
+Rebuild PhotoRec if needed
+Use the included vendor-source\testdisk-7.2.tar.bz2 and extract its contents to
+a build directory. Install a MinGW-w64 x86_64 GCC environment with the static
+libjpeg-turbo and zlib development libraries. The shipped executable was built
+with GCC 13.2. Put the MinGW-w64 bin folder on PATH. Use a fresh object directory.
+
+  python native\build_photorec.py C:\build\testdisk-7.2 C:\build\photo-objects tools\photorec\photorec.exe
+
+The script compiles the upstream photorec_C_SOURCES from Makefile.am for a
+little-endian 64-bit Windows target. native\photorec_port.py supplies the
+Windows large-file seek and propagates headless write errors. The scripted CLI
+has no curses UI. It runs in the per-engine output directory with relative paths
+inside the case. The PhotoRec log and DFXML are retained with each run.
+
+Model rebuild
+native\export_tree.py is a build-time helper for the original v0.3 research
+environment with joblib and scikit-learn. It verifies the archived model hash,
+exports exact feature indices, thresholds, branches and leaf labels, and checks
+the exported inference against sklearn. The released worker requires neither
+sklearn nor unpickling of user-supplied files.
+
+Pack and test
+  Run validation.cmd
+  runtime\python.exe -B packaging\make_zip.py C:\build\RecoverX-Windows-x64.zip
+  powershell -NoProfile -File packaging\build-setup.ps1 -Archive C:\build\RecoverX-Windows-x64.zip -Destination C:\build\RecoverX-Setup-x64.exe
+
+The ZIP uses RecoverX/ as its top-level directory. The setup executable embeds
+that ZIP, expands it into a fresh per-user directory and creates a shortcut.
+For isolated setup testing, pass --test-install followed by a disposable local
+folder. That option writes the shortcut in the test folder and skips launching
+the installed app.
+
+Implementation references
+Windows disk properties and openable device path
+https://learn.microsoft.com/en-us/windows-hardware/drivers/storage/msft-disk
+Volume-to-disk extent queries
+https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ni-winioctl-ioctl_volume_get_volume_disk_extents
+TSK deleted-file extraction and sector offsets
+https://www.sleuthkit.org/sleuthkit/man/tsk_recover.html
+PhotoRec scripted scanning
+https://www.cgsecurity.org/wiki/Scripted_run

@@ -1,0 +1,85 @@
+RecoverX 1.0 RC1  |  Disposable USB acceptance test
+
+STATUS
+Physical USB recovery is pending. The development session could run Windows
+executables and file-backed recovery tests. Windows denied access to the live
+storage inventory. No physical disk was acquired in that session.
+
+WHAT TO USE
+A disposable USB flash drive that you own, an existing internal destination
+folder, and the supplied validation\originals directory. Keep the software,
+reference files, original-hashes.json and all output on the computer. Use a
+small drive for the first run. Budget for a whole raw image, the largest
+partition scratch image, candidates and exported copies.
+
+PREPARE THE KNOWN FILES
+1. Keep DUSK.JPG, FJORD.PNG and NOTES.PDF on the computer. Keep the supplied
+   validation\sample\original-hashes.json there too. It identifies the
+   expected SHA-256 for each file.
+2. To validate the references independently, open PowerShell in the extracted
+   RecoverX directory on the computer and run this optional read-only check.
+
+     Get-ChildItem -LiteralPath .\validation\originals -File | Get-FileHash -Algorithm SHA256
+
+   Compare all three values with original-hashes.json. Record the USB model,
+   capacity, filesystem, disk number and Windows build in your test notes.
+3. In File Explorer, copy the three files onto the disposable USB. Verify the
+   copies open. Close them. Delete only those three USB copies. Use Shift+Delete
+   if Windows would otherwise put them in the Recycle Bin. Leave the originals
+   on the computer. Stop writing to the USB. Safely eject, then reconnect it.
+
+CAPTURE AND RECOVER
+4. Launch RecoverX normally. Select the card matching the disposable USB.
+   Check its physical disk number, capacity and volume details. Choose File
+   records. In Advanced settings choose Load original SHA-256 manifest and
+   select the copy of original-hashes.json on the computer.
+5. Choose an existing folder on a separate internal disk, confirm and start.
+   Accept the UAC prompt for the reader. Observe the measured acquisition
+   progress and wait for the results. Do not disconnect during this first run.
+6. In the results, note the distinct files, original hashes matched, warnings
+   and elapsed scan time. Recover selected. Open the output folder and visually
+   inspect the JPG, PNG and PDF where recovered. An export verification alone
+   proves that the staged bytes were copied correctly. The original-hash match
+   is the test of exact recovery.
+7. Repeat with Signature scan and Smart recovery. For a direct-USB test of
+   each method, select the same USB card each time. Each run creates a new case.
+   For a controlled comparison with identical input bytes, additionally run
+   Disk image against the first case's evidence.img, loading the same original
+   manifest for each method. Record which runs used a physical source.
+8. Retain each case's acquisition.json, report.json and export-receipt.json.
+   In report.json, metrics.exact_recovered is the number of distinct original
+   hashes matched, metrics.unrecovered is the number missing, and metrics.outputs
+   includes duplicates. files[].reference and files[].sha256 identify individual
+   matches. decisions[] lists Smart's selection and any fallback. Acquisition
+   time and scan time are recorded separately in seconds.
+
+EXPECTED EVIDENCE
+For this three-file test, the success target is three distinct original matches
+and zero missing. Record actual results even when lower. A result on one drive
+and filesystem describes that device and run. Repeat on existing FAT32, exFAT
+and NTFS disposable media to establish coverage.
+
+Method          Physical or image   Capture s   Scan s   Outputs   Exact/3   Missing   Errors
+File records    _________________   _________   ______   _______   _______   _______   ______
+Signature scan  _________________   _________   ______   _______   _______   _______   ______
+Smart recovery  _________________   _________   ______   _______   _______   _______   ______
+
+SAFETY AND FAILURE CHECKS ON THE DISPOSABLE DRIVE
+• Confirm that the Windows disk is absent from the selectable source list.
+• Select a folder on the source as the destination. Starting must stop before
+  creating a case there. Also try another partition on the same physical USB
+  when one already exists.
+• Decline the acquisition UAC prompt. Verify no image or new case was created.
+• Start a fresh acquisition, cancel partway and inspect the incomplete case.
+  A completed evidence.img or a recovery scan must not be published.
+• On a separate trial with the disposable USB, disconnect it during acquisition.
+  Record the Windows error and partial length. Reconnect, refresh and start a
+  fresh case. Do not test disconnects on your only copy of important data.
+• Check the report's acquired byte count against the device size. Independently
+  hash evidence.img with Get-FileHash and compare against acquisition.json.
+• Check denied access, insufficient space, duplicate candidate names, and a
+  destination with non-ASCII characters. Save the exact error and case logs.
+
+The application performs read-only acquisition. Windows can modify a mounted
+filesystem independently of the application. Record the write-blocker model
+when one is used.

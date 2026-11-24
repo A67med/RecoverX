@@ -1,0 +1,37 @@
+RecoverX Recovery Studio RC1
+
+The original RecoverX license is in LICENSE. The upstream academic project
+marked its license as provisional. Upstream Python code and the trained model
+are retained with their original attribution. This desktop bundle also includes
+separately licensed recovery programs, unlike the v0.3 source ZIP.
+
+The Sleuth Kit 4.15.0
+The shipped tsk_recover.exe and supporting Windows DLLs came from the
+sleuthkit-4.15.0-win32 distribution in C:\RX\downloads. The runtime runs this
+utility on x64 Windows using its supported 32-bit subsystem. License texts are
+in licenses\sleuthkit. Corresponding project source is in vendor-source.
+https://github.com/sleuthkit/sleuthkit/releases/tag/sleuthkit-4.15.0
+
+PhotoRec 7.2
+Copyright Christophe GRENIER and other TestDisk/PhotoRec contributors. The
+native scripted CLI uses GPL-licensed PhotoRec. COPYING.txt and AUTHORS.txt
+are in tools\photorec. The complete upstream source archive is in vendor-source.
+The Windows build recipe and adjustments are in native\build_photorec.py and
+photorec_port.py. libjpeg-turbo, zlib and GCC runtime license notices are in
+the adjacent license directories.
+https://www.cgsecurity.org/testdisk-7.2.tar.bz2
+
+Python 3.12.7 x64
+The Windows embeddable distribution is bundled in runtime. Its PSF license and
+third-party notices are in runtime\LICENSE.txt. The isolated import path adds
+only the shipped application source and validation modules.
+https://www.python.org/ftp/python/3.12.7/python-3.12.7-embed-amd64.zip
+
+pytsk3 20260715
+The CPython 3.12 win_amd64 binding supplies filesystem metadata. Its packaging
+metadata and license files are included in runtime\pytsk3-20260715.dist-info.
+https://pypi.org/project/pytsk3/20260715/
+
+Microsoft runtime components carry their respective vendor terms. RecoverX
+uses .NET Framework and the Windows storage APIs supplied by the host OS.
+The desktop application and installer have no Authenticode signature.

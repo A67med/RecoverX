@@ -1,0 +1,34 @@
+<Viewbox xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Stretch="Uniform">
+ <Canvas Width="390" Height="232" ClipToBounds="True">
+  <Canvas.Resources>
+   <LinearGradientBrush x:Key="shell" StartPoint="0,0" EndPoint=".75,1"><GradientStop Color="#EFEBFF" Offset="0"/><GradientStop Color="#AFB4FF" Offset=".28"/><GradientStop Color="#8A87ED" Offset=".74"/><GradientStop Color="#D8C7FF" Offset="1"/></LinearGradientBrush>
+   <LinearGradientBrush x:Key="edge" StartPoint="0,0" EndPoint=".8,1"><GradientStop Color="#6E65BC"/><GradientStop Color="#38335C" Offset=".64"/><GradientStop Color="#857ABA" Offset="1"/></LinearGradientBrush>
+   <LinearGradientBrush x:Key="metal" StartPoint="0,0" EndPoint="1,.83"><GradientStop Color="#BECBE6"/><GradientStop Color="#F8F6FF" Offset=".45"/><GradientStop Color="#8C9CBF" Offset="1"/></LinearGradientBrush>
+   <RadialGradientBrush x:Key="halo"><GradientStop Color="#805E62E3"/><GradientStop Color="#00465086" Offset="1"/></RadialGradientBrush>
+  </Canvas.Resources>
+  <Ellipse Canvas.Left="36" Canvas.Top="10" Width="350" Height="220" Fill="{StaticResource halo}"/>
+  <Path Stroke="#465978A6" StrokeThickness=".9" Data="M0,164 L210,43 389,145 M0,194 L237,57 M15,216 L263,72 M59,232 L288,99 M112,231 L315,114 M165,231 L340,130 M218,230 L368,143 M18,123 L206,231 M45,108 L258,230 M73,92 L311,229 M101,76 L363,227 M131,60 L390,209 M159,44 L390,176"/>
+  <Ellipse Canvas.Left="22" Canvas.Top="53" Width="347" Height="135" Stroke="#5A8B9ED5" StrokeDashArray="1 6"><Ellipse.RenderTransform><RotateTransform Angle="-14" CenterX="174" CenterY="68"/></Ellipse.RenderTransform></Ellipse>
+  <Path Fill="#61424978" Data="M70,149 L227,58 325,117 170,208 Z"/>
+  <!-- USB-A connector, drawn in the same projection as the enclosure. -->
+  <Path Fill="#75809E" Data="M224,82 L274,52 327,82 327,97 273,128 224,100 Z"/>
+  <Path Fill="{StaticResource metal}" Stroke="#E7EDFF" StrokeThickness="1" Data="M220,80 L276,47 329,78 273,111 Z"/>
+  <Path Fill="#48536A" Data="M274,58 L284,64 273,70 263,64 Z M293,69 L303,75 292,81 282,75 Z"/>
+  <Path Stroke="#FFFFFF" Opacity=".64" Data="M238,78 L273,57 M252,86 L263,80 M270,96 L283,88"/>
+  <Path Fill="#383953" Data="M273,111 L329,78 329,94 273,126 Z"/>
+  <Path Stroke="#A7B1C8" StrokeThickness="2" Data="M278,113 L324,86"/>
+  <!-- Moulded shell, chamfer and recessed face. -->
+  <Path Fill="{StaticResource edge}" Stroke="#706AB3" Data="M65,137 Q60,133 68,127 L211,44 Q220,39 227,44 L283,77 Q290,81 290,89 L290,107 Q289,112 282,116 L140,198 Q133,203 126,198 L68,165 Q63,162 63,156 Z"/>
+  <Path Fill="{StaticResource shell}" Stroke="#ECE6FF" StrokeThickness="1.4" Data="M67,128 L212,44 Q219,40 226,44 L284,78 Q292,83 284,89 L140,172 Q133,176 126,172 L67,138 Q60,133 67,128 Z"/>
+  <Path Stroke="#EAE3FF" StrokeThickness="1.1" Opacity=".72" Data="M71,133 L130,167 Q134,170 139,167 L278,87"/>
+  <Path Stroke="#9089E5" StrokeThickness="1" Data="M101,113 L164,150 M106,110 L169,147"/>
+  <Path Fill="#625DA4" Data="M216,59 Q219,57 222,59 L244,72 Q247,74 244,76 L240,78 213,62 Z"/>
+  <Path Fill="#CDFFF3" Data="M218,60 L239,72 236,74 215,62 Z"/>
+  <Path Stroke="#F3EFFF" StrokeThickness="3.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M158,118 L181,105 196,114 M167,124 L190,111 M176,129 L199,116"/>
+  <Path Stroke="#A59FE3" Data="M70,146 L127,178 Q133,182 141,178 L283,96" Opacity=".8"/>
+  <Path Fill="#302C4D" Data="M76,149 L102,164 102,171 76,155 Z"/>
+  <Path Stroke="#CFC7FC" StrokeThickness="1" Data="M68,188 L119,217 142,204 M290,43 L308,33 345,54"/>
+  <Ellipse Canvas.Left="341" Canvas.Top="51" Width="5" Height="5" Fill="#A6EDDB"/>
+  <Ellipse Canvas.Left="116" Canvas.Top="214" Width="5" Height="5" Fill="#A9AFF0"/>
+ </Canvas>
+</Viewbox>

@@ -1,0 +1,40 @@
+{
+  "names": [
+    "fs_detected",
+    "fs_fat",
+    "fs_ext",
+    "has_partition_table",
+    "image_mb",
+    "n_allocated",
+    "n_deleted",
+    "n_deleted_named",
+    "n_deleted_nonzero",
+    "frac_deleted_nonzero",
+    "n_realloc"
+  ],
+  "left": [
+    1,
+    -1,
+    -1
+  ],
+  "right": [
+    2,
+    -1,
+    -1
+  ],
+  "feature": [
+    7,
+    -2,
+    -2
+  ],
+  "threshold": [
+    4.5,
+    -2.0,
+    -2.0
+  ],
+  "label": [
+    "photorec",
+    "photorec",
+    "tsk"
+  ]
+}

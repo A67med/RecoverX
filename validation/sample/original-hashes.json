@@ -1,0 +1,19 @@
+{
+  "deleted": [
+    {
+      "id": "DUSK.JPG",
+      "sha256": "d28da6cdfbe83b8027c99dc36ad185eb8fcb15131d35a911125ddd34fb97a4f6",
+      "size": 15526
+    },
+    {
+      "id": "FJORD.PNG",
+      "sha256": "d4607356f3ffe9c936d4064c5f0d2d31ed084e5c76af5ca64b4da8be60bf8ff7",
+      "size": 5523
+    },
+    {
+      "id": "NOTES.PDF",
+      "sha256": "088f120b4a918762d88d0e8214df284ee45a2c4d6376efdd23f8cb9e6a16d06f",
+      "size": 613
+    }
+  ]
+}

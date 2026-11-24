@@ -1,0 +1,71 @@
+RecoverX Recovery Studio 1.0 RC1
+Windows validation report
+
+RESULT
+Three deleted reference files were recovered byte-for-byte by each fixed engine
+from a synthetic MBR/FAT32 disk image. All six methods passed. Combined mode
+produced six engine outputs with three distinct contents. Hardware acquisitions
+performed in this verification: zero.
+
+Windows x64 build 26300. Packaged CPython 3.12.7, Windows TSK 4.15.0,
+Windows PhotoRec 7.2, and pytsk3 20260715. The test volume starts at logical
+sector 2048 (1,048,576 bytes). The fixture includes deleted directory entries,
+free clusters and the original retained contents. Source SHA-256 was checked
+again after each of the six method runs.
+
+Measured single-partition runs (scan seconds exclude physical acquisition)
+Method      Engine order       Outputs   Matched   Missing   Seconds
+tsk         tsk                3         3         0         0.312
+photorec    photorec           3         3         0         0.469
+combined    tsk+photorec       6         3         0         0.953
+smart       photorec           3         3         0         0.515
+cart        photorec           3         3         0         0.609
+rule        tsk                3         3         0         0.360
+
+SHA-256 of the sample disk image
+3ba44a9b4198f833bf3f8ad9d294177c5f60cbd7df99952222469ef5f1fee0c6
+
+Reference originals
+DUSK.JPG   d28da6cdfbe83b8027c99dc36ad185eb8fcb15131d35a911125ddd34fb97a4f6
+FJORD.PNG   d4607356f3ffe9c936d4064c5f0d2d31ed084e5c76af5ca64b4da8be60bf8ff7
+NOTES.PDF   088f120b4a918762d88d0e8214df284ee45a2c4d6376efdd23f8cb9e6a16d06f
+
+SOFTWARE CHECKS
+17 engine, partition, policy and integrity checks passed. These include all
+six strategies, actual failover from an empty carve to a successful TSK
+recovery, missing-model behavior, two-partition GPT, 4Kn-addressed GPT carving,
+raw-volume recovery, cancellation, hash mismatch, invalid GPT checksums,
+invalid MBR bounds and a cyclic EBR. The 4Kn case uses a synthetic outer
+partition map and does not validate a 4Kn device or 4Kn-native filesystem.
+
+25 desktop, acquisition and safety checks passed. The mock stream covered
+exact byte copying, early EOF and cancellation. Policy tests exercised
+system disks, same physical disk, other bus types, offline media and unknown
+boot status. The native desktop also ran the sample through both engines,
+previewed images, filtered and selected files, verified three exported copies
+and rejected publication of a file whose expected hash differed. The destination
+path included a space and a non-ASCII character. The test renders are actual
+WPF views of that session. The home screen reflects the host's access error.
+
+21 retained v0.3 core and Smart regression checks passed against the staged
+Python source, including the frozen benchmark objective and original CART
+train/save/load behavior. Eight additional decision inputs were compared
+between the archived sklearn classifier and the portable tree during export.
+
+validation/evidence contains raw engine measurements, the desktop and legacy
+test logs and four PNG screenshots. Run validation.cmd repeats the desktop RC
+checks and the native engine tests. It does not require administrator rights.
+
+PHYSICAL VALIDATION STILL REQUIRED
+The Windows storage inventory returned Access is denied in this managed session.
+No disposable source was selected and no elevated acquisition was performed.
+USB detection and hot-plug on an unrestricted machine, the UAC handoff, aligned
+device reads, physical removal/cancellation, same-device output rejection on
+real storage, and hardware throughput need testing. Real FAT32, exFAT, NTFS and
+4Kn media, Windows 10, RAID controllers and large/fragmented cases were not
+exercised here. The first hardware test should use the included reference
+files and docs/USB-HARDWARE-TEST.txt.
+
+A carved candidate can be live, incomplete or unrelated. A missing hash can
+reflect overwrite, trim, fragmentation or engine limits. Only exact original
+hash matches count as accepted files in this test.
