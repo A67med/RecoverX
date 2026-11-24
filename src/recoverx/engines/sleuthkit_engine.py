@@ -26,7 +26,7 @@ class SleuthKitEngine(BaseEngine):
                  timeout: float, cancel_event: threading.Event | None) -> None:
         files_dir = output_dir / "files"
         files_dir.mkdir()
-        args = ["tsk_recover"]
+        args = ["tsk_recover", "-i", "raw", "-b", str(int(getattr(self, "sector_size", 512)))]
         if sector_offset:
             args += ["-o", str(sector_offset)]
         args += [str(image), str(files_dir)]
@@ -36,7 +36,8 @@ class SleuthKitEngine(BaseEngine):
             run.status, run.error = "timed_out", f"tsk_recover exceeded {timeout}s"
         elif res.cancelled:
             run.status, run.error = "cancelled", "cancelled by user"
-        elif res.returncode != 0:
+        elif res.returncode != 0 or re.search(r'error (?:writing|creating|opening|recovering)|no space left',
+                                               res.stderr, re.I):
             run.status = "failed"
             run.error = (res.stderr.strip() or f"exit code {res.returncode}")[:500]
         else:

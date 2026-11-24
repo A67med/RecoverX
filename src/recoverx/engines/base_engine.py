@@ -59,7 +59,7 @@ class BaseEngine(ABC):
         while not probe.exists():
             probe = probe.parent
         free = shutil.disk_usage(probe).free
-        if free < image.stat().st_size:
+        if free < getattr(self, "required_free_bytes", image.stat().st_size):
             return f"insufficient free space for output ({free} bytes free)"
         return None
 

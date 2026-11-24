@@ -8,6 +8,9 @@ Verified behaviour (docs/feasibility.md):
   * Output goes to <dir>/recup.1/, plus report.xml listing carved byte ranges.
   * `freespace` restricts carving to unallocated space when the filesystem is
     recognised (log shows e.g. fat16_remove_used_space / ext2_remove_used_space).
+On Windows a release-managed native binary in tools/photorec (the RC1 MinGW build of
+TestDisk 7.2, or the official photorec_win.exe) is used when present; otherwise the
+Ubuntu PhotoRec is driven through unprivileged WSL.
 PhotoRec does not restore original names, paths or timestamps."""
 from __future__ import annotations
 
@@ -33,8 +36,20 @@ class PhotoRecEngine(BaseEngine):
             raise ValueError("PhotoRec script must contain only [a-z0-9_,]")
         self.script = script
 
+    @staticmethod
+    def _native() -> str | None:
+        """Path of a native PhotoRec binary (always the PATH lookup off Windows)."""
+        return resolve_tool("photorec")
+
+    @staticmethod
+    def _invoker_env() -> dict[str, str] | None:
+        # The official photorec_win.exe manifest requests administrator rights, which
+        # an unelevated worker cannot grant (WinError 740). Reading an image file needs
+        # no elevation, so ask Windows to start it with the caller's own token.
+        return {"__COMPAT_LAYER": "RunAsInvoker"} if os.name == "nt" else None
+
     def capabilities(self) -> dict:
-        if os.name != "nt":
+        if os.name != "nt" or self._native():
             return super().capabilities()
         wsl = resolve_tool("wsl")
         version = self.version() if wsl else None
@@ -51,8 +66,9 @@ class PhotoRecEngine(BaseEngine):
                        cwd=cwd, timeout=timeout, cancel_event=cancel_event)
 
     def version(self) -> str | None:
-        r = (self._windows(["/usr/bin/photorec", "/version"]) if os.name == "nt"
-             else run_cmd(["photorec", "/version"], timeout=15))
+        native = self._native()
+        r = (self._windows(["/usr/bin/photorec", "/version"]) if os.name == "nt" and not native
+             else run_cmd([native or "photorec", "/version"], timeout=15, env_extra=self._invoker_env()))
         m = re.search(r"Version:\s*([\w.]+)", r.stdout + r.stderr) or re.search(r"PhotoRec\s+([\d.]+)", r.stdout)
         return m.group(1) if m else None
 
@@ -61,7 +77,13 @@ class PhotoRecEngine(BaseEngine):
         if sector_offset:
             raise ValueError("PhotoRec partition offsets are unsupported; use whole-image carving at offset 0")
         args = ["photorec", "/log", "/d", str(output_dir / "recup"), "/cmd", str(image), self.script]
-        if os.name == "nt":
+        native = self._native() if os.name == "nt" else None
+        if native:
+            # Native Windows build: relative paths inside the case keep the command short.
+            args = [native, "/log", "/d", "recup", "/cmd", os.path.relpath(image, output_dir), self.script]
+            res = run_cmd(args, cwd=output_dir, timeout=timeout, cancel_event=cancel_event,
+                          env_extra=self._invoker_env())
+        elif os.name == "nt":
             translated = self._windows(["wslpath", "-a", "-u", str(image)], cancel_event=cancel_event)
             linux_image = translated.stdout.strip()
             if not translated.ok or not linux_image.startswith("/"):

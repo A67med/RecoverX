@@ -19,6 +19,13 @@ def resolve_tool(command: str) -> str | None:
     if command.lower() in ("wsl", "wsl.exe"):
         system_wsl = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "wsl.exe"
         return str(system_wsl) if system_wsl.is_file() else None
+    if command.lower() in ("photorec", "photorec.exe", "photorec_win.exe"):
+        # Native Windows PhotoRec (RC1 MinGW build or the official photorec_win.exe).
+        base = PROJECT_ROOT / "tools" / "photorec"
+        for name in ("photorec.exe", "photorec_win.exe"):
+            if (base / name).is_file():
+                return str((base / name).resolve())
+        return None
     filename = command if command.lower().endswith(".exe") else command + ".exe"
     roots = [PROJECT_ROOT / "tools" / "tsk"]
     # Prefer the release-managed copy; never execute something found in a case/output folder.
