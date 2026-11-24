@@ -1,0 +1,5284 @@
+{
+ "objective": {
+  "tolerance": 0.05,
+  "tie_epsilon_s": 0.0,
+  "_comment": "Pre-registered strategy-label objective. Frozen 2026-10-30 before any benchmark run. Do not tune on test results; report sensitivity instead.",
+  "quality_metric": "exact-file recall vs deleted ground truth (SHA-256)",
+  "tie_break_order": [
+   "tsk",
+   "photorec",
+   "combined"
+  ],
+  "sensitivity_tolerances": [
+   0.0,
+   0.1,
+   0.2
+  ],
+  "rule_policy": "rule-v1 (src/recoverx/ml/selector.py)",
+  "hyperparameter_grid": {
+   "max_depth": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "min_samples_leaf": [
+    1,
+    2,
+    4
+   ]
+  },
+  "model_selection": "highest validation balanced accuracy; ties -> smaller depth, then larger min_samples_leaf; final model refit on train+val",
+  "repeats": 3,
+  "primary_comparison": "per-test-image median end-to-end time and recall, CART vs each baseline (paired, Wilcoxon signed-rank, two-sided)",
+  "acceptable_quality": "per-image recall within 0.05 of the best fixed strategy on that image"
+ },
+ "labels": {
+  "fat16-delete-s8": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.367348,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.2712,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.25233,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s8": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.25,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.252076,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.25,
+     "median_time": 0.381038,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.25,
+     "median_time": 0.46254,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s8": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.8,
+     "median_time": 0.472141,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.248853,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8,
+     "median_time": 0.559061,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s8": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.174976,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.12667,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.148385,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s8": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.287225,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.629165,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.515448,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s8": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.42857142857142855,
+     "median_time": 0.264595,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.298181,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.397291,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s8": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8823529411764706,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.8823529411764706,
+     "median_time": 0.635345,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8823529411764706,
+     "median_time": 0.518177,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.058823529411764705,
+     "median_time": 0.27166,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s8": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.277482,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.5,
+     "median_time": 0.245216,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.212719,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s8": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.144478,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.245242,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.265081,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s8": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.207341,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.142525,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.235836,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s8": {
+   "label": "combined",
+   "eligible": [
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.9411764705882353,
+     "median_time": 0.403102,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.5294117647058824,
+     "median_time": 0.23627,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.445596,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s8": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.251912,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.212726,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.195944,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s9": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.153191,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8,
+     "median_time": 0.249882,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.300424,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s9": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.246816,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.254641,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.326019,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s9": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 0.9375,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.9375,
+     "median_time": 0.234707,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.156046,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.9375,
+     "median_time": 0.253739,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s9": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.142167,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.126804,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.166621,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s9": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.282333,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.745359,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.511665,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s9": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.230686,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.25,
+     "median_time": 0.155696,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.165246,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s9": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9411764705882353,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.058823529411764705,
+     "median_time": 0.165856,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.9411764705882353,
+     "median_time": 0.37373,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.9411764705882353,
+     "median_time": 0.300093,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s9": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.134178,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.186929,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.157075,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s9": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 0.8,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.8,
+     "median_time": 0.569511,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8,
+     "median_time": 0.542843,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.232828,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s9": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.5714285714285714,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.5714285714285714,
+     "median_time": 0.257564,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.138931,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.5714285714285714,
+     "median_time": 0.265117,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s9": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.4,
+     "median_time": 0.252591,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.320883,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.373524,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s9": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.229676,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.267341,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.221715,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s10": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.530145,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.300987,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8,
+     "median_time": 0.623272,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s10": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.152307,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.3333333333333333,
+     "median_time": 0.158563,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.208877,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s10": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8888888888888888,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.8888888888888888,
+     "median_time": 0.590338,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.265511,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8888888888888888,
+     "median_time": 0.56961,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s10": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.272114,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.203586,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.23262,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s10": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.339645,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.420949,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.311334,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s10": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.161153,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.252303,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.193131,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s10": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 0.8333333333333334,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.8333333333333334,
+     "median_time": 0.733394,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8333333333333334,
+     "median_time": 0.71628,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.296693,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s10": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.215858,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.260564,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.2731,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s10": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.449725,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.235826,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.481704,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s10": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.265486,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.143046,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.233948,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s10": {
+   "label": "combined",
+   "eligible": [
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.9285714285714286,
+     "median_time": 0.181083,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.234742,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.5,
+     "median_time": 0.149783,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s10": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.166633,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.127175,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.136711,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s11": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.299659,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.385993,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.287214,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s11": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.627794,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.547133,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.262771,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s11": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.26369,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.32441,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.386601,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s11": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined",
+    "tsk"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.311906,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.251732,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.312314,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s11": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.315542,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.246004,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.176958,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s11": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.75,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.75,
+     "median_time": 0.43564,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.75,
+     "median_time": 0.394581,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.25,
+     "median_time": 0.163529,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s11": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9090909090909091,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.275816,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.9090909090909091,
+     "median_time": 0.345056,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.9090909090909091,
+     "median_time": 0.442496,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s11": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.6666666666666666,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.270199,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.219083,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.251309,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s11": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.353913,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.151269,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.359124,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s11": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.2,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.2,
+     "median_time": 0.297356,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.243095,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.2,
+     "median_time": 0.254841,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s11": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9444444444444444,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.9444444444444444,
+     "median_time": 0.230468,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.5,
+     "median_time": 0.151333,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.9444444444444444,
+     "median_time": 0.178414,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s11": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.3333333333333333,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.3333333333333333,
+     "median_time": 0.223287,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.3333333333333333,
+     "median_time": 0.288538,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.228506,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s12": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.255466,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.332729,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.18411,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s12": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.42857142857142855,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.42857142857142855,
+     "median_time": 0.264549,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.42857142857142855,
+     "median_time": 0.309645,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.42857142857142855,
+     "median_time": 0.360524,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s12": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8888888888888888,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.149755,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8888888888888888,
+     "median_time": 0.305433,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8888888888888888,
+     "median_time": 0.346412,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s12": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.142384,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.117766,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.164374,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s12": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.182047,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.219318,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.282488,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s12": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.338415,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.157589,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.245389,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s12": {
+   "label": "combined",
+   "eligible": [
+    "combined"
+   ],
+   "best_recall": 0.9411764705882353,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.058823529411764705,
+     "median_time": 0.275416,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8823529411764706,
+     "median_time": 0.541141,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.9411764705882353,
+     "median_time": 0.60862,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s12": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.135383,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.176702,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.152673,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s12": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.136545,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.222772,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.262064,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s12": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.7142857142857143,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.138674,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.7142857142857143,
+     "median_time": 0.198889,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.7142857142857143,
+     "median_time": 0.159684,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s12": {
+   "label": "combined",
+   "eligible": [
+    "combined"
+   ],
+   "best_recall": 0.9444444444444444,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.8888888888888888,
+     "median_time": 0.400115,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.5555555555555556,
+     "median_time": 0.245591,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.9444444444444444,
+     "median_time": 0.494552,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s12": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.23256,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.209279,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.261322,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s13": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.52863,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.456168,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.270741,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s13": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.16666666666666666,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.16666666666666666,
+     "median_time": 0.206908,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.16666666666666666,
+     "median_time": 0.151537,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.16666666666666666,
+     "median_time": 0.156526,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s13": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.25449,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.31824,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.359172,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s13": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.120501,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.145259,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.174304,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s13": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.305551,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.32315,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.442425,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s13": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8333333333333334,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.8333333333333334,
+     "median_time": 0.431403,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.3333333333333333,
+     "median_time": 0.30716,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8333333333333334,
+     "median_time": 0.341564,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s13": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8571428571428571,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.311879,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.508088,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.581737,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s13": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.5,
+     "median_time": 0.24149,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.216593,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.264655,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s13": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8571428571428571,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.215381,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.477,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.523004,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s13": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.233174,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.311737,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.250969,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s13": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.5333333333333333,
+     "median_time": 0.147215,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.160601,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.222794,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s13": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.126564,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.137433,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.169216,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s14": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.258796,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.433316,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.489839,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s14": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.26124,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.266816,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.334079,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s14": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.222522,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.153849,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.164546,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s14": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.240415,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.216881,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.266927,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s14": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.274293,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.165116,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.356742,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s14": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.197628,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.259343,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.163264,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s14": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8181818181818182,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.162619,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8181818181818182,
+     "median_time": 0.322995,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8181818181818182,
+     "median_time": 0.243478,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s14": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.217751,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.266835,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.245788,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s14": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.221673,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.301238,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.255057,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s14": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.6666666666666666,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.235329,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.512793,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.446312,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s14": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.4166666666666667,
+     "median_time": 0.245926,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.375266,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.305647,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s14": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.313732,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.272003,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.248499,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s15": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.344119,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8333333333333334,
+     "median_time": 0.245435,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.188648,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s15": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.2857142857142857,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.2857142857142857,
+     "median_time": 0.331557,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.2857142857142857,
+     "median_time": 0.36252,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.2857142857142857,
+     "median_time": 0.305003,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s15": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8823529411764706,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.211578,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8823529411764706,
+     "median_time": 0.290971,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8823529411764706,
+     "median_time": 0.42607,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s15": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.119345,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.164095,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.139297,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s15": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.555449,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.276851,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.435557,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s15": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.615135,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.487629,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.263591,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s15": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9285714285714286,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.256939,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.9285714285714286,
+     "median_time": 0.416349,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.9285714285714286,
+     "median_time": 0.322822,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s15": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.175842,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.5,
+     "median_time": 0.143963,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.120801,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s15": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8333333333333334,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.8333333333333334,
+     "median_time": 0.18845,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.172254,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8333333333333334,
+     "median_time": 0.157789,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s15": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.2857142857142857,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.159589,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.2857142857142857,
+     "median_time": 0.265812,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.2857142857142857,
+     "median_time": 0.170781,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s15": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9375,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.9375,
+     "median_time": 0.276199,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.5,
+     "median_time": 0.164432,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.9375,
+     "median_time": 0.33585,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s15": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.177675,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.129431,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.14636,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s16": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.305169,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.183082,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.267261,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s16": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.3333333333333333,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.3333333333333333,
+     "median_time": 0.267315,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.3333333333333333,
+     "median_time": 0.274847,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.3333333333333333,
+     "median_time": 0.370051,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s16": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9285714285714286,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.266872,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.9285714285714286,
+     "median_time": 0.308699,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.9285714285714286,
+     "median_time": 0.40168,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s16": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.219034,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.246088,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.269537,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s16": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.255587,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.163339,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.182466,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s16": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.8,
+     "median_time": 0.263712,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8,
+     "median_time": 0.19146,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.166555,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s16": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.1111111111111111,
+     "median_time": 0.185281,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.373956,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.281852,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s16": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.149375,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.182713,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.133069,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s16": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.14571,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.192252,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.150549,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s16": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.157111,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.201832,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.136768,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s16": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.283825,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.234954,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.4,
+     "median_time": 0.148472,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s16": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.230144,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.249054,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.264789,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s17": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.222719,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.169352,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.16904,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s17": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.154937,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.147569,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.220093,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s17": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.153346,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.357889,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.309255,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s17": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.179603,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.130024,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.151101,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s17": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.345312,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.312236,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.454785,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s17": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.75,
+     "median_time": 0.169715,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.248403,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.181805,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s17": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.7333333333333333,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.7333333333333333,
+     "median_time": 0.621253,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.272532,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.7333333333333333,
+     "median_time": 0.687773,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s17": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.183103,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.221384,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.176665,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s17": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.335133,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.283704,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.235485,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s17": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.8,
+     "median_time": 0.154972,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8,
+     "median_time": 0.203432,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.150338,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s17": {
+   "label": "combined",
+   "eligible": [
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.55471,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.5,
+     "median_time": 0.250764,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.9285714285714286,
+     "median_time": 0.45532,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s17": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.1375,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.161274,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.12269,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s18": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.362934,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.261779,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8333333333333334,
+     "median_time": 0.275378,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s18": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.201167,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.3333333333333333,
+     "median_time": 0.15421,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.154845,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s18": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8181818181818182,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.173038,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8181818181818182,
+     "median_time": 0.305809,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8181818181818182,
+     "median_time": 0.369614,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s18": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.246361,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.220707,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.300033,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s18": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.307081,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.330404,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.411063,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s18": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8571428571428571,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.14285714285714285,
+     "median_time": 0.282688,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.668498,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.544731,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s18": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8571428571428571,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.51368,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.273071,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.613365,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s18": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.130743,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.183717,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.155156,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s18": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.217485,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.262207,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.139201,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s18": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.5714285714285714,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.5714285714285714,
+     "median_time": 0.523825,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.231482,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5714285714285714,
+     "median_time": 0.469961,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s18": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.233039,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.5333333333333333,
+     "median_time": 0.15538,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.170024,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s18": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.140129,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.17925,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.123183,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s19": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.242156,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.161012,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.16525,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s19": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.25,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.158074,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.25,
+     "median_time": 0.348944,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.25,
+     "median_time": 0.258751,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s19": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9444444444444444,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.9444444444444444,
+     "median_time": 0.307152,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.9444444444444444,
+     "median_time": 0.261562,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.155047,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s19": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.244029,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.23267,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.27251,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s19": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.489409,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.606508,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.306426,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s19": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.75,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.164864,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.75,
+     "median_time": 0.186001,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.75,
+     "median_time": 0.252482,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s19": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9333333333333333,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.9333333333333333,
+     "median_time": 0.310886,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.168126,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.9333333333333333,
+     "median_time": 0.375575,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s19": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.159218,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.187467,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.133425,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s19": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.18307,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.144612,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.237041,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s19": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.20441,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.14995,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.159399,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s19": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.478001,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.4444444444444444,
+     "median_time": 0.24791,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.428547,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s19": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.168951,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.141871,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.12748,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s20": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.157282,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.153323,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.215073,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s20": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.3333333333333333,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.28482,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.3333333333333333,
+     "median_time": 0.391462,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.3333333333333333,
+     "median_time": 0.296918,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s20": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9333333333333333,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.9333333333333333,
+     "median_time": 0.282613,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.216555,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.9333333333333333,
+     "median_time": 0.319773,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s20": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.172979,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.225605,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.245888,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s20": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.298432,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.650101,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8333333333333334,
+     "median_time": 0.544764,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s20": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.320437,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.5,
+     "median_time": 0.250855,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.235645,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s20": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.9,
+     "median_time": 0.609493,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.275977,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.9,
+     "median_time": 0.496105,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s20": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.174131,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.157048,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.135404,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s20": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.209351,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.154806,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.145438,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s20": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.488571,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.261129,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.511581,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s20": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.485199,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.47058823529411764,
+     "median_time": 0.250589,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.571602,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s20": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.127192,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.139579,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.174927,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s21": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.243393,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.18162,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.165464,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s21": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.25,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.25,
+     "median_time": 0.206724,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.25,
+     "median_time": 0.149429,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.156276,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s21": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.309238,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.36256,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.158314,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s21": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.15842,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.182046,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.134784,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s21": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.274016,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.197793,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.178958,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s21": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.651471,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.289047,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.530204,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s21": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.9444444444444444,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.9444444444444444,
+     "median_time": 0.607998,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.1111111111111111,
+     "median_time": 0.30116,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.9444444444444444,
+     "median_time": 0.663594,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s21": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.5,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.5,
+     "median_time": 0.159665,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 0.131844,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.5,
+     "median_time": 0.186154,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s21": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.244499,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.32265,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.322031,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s21": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.7142857142857143,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.7142857142857143,
+     "median_time": 0.153314,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.7142857142857143,
+     "median_time": 0.191471,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.140778,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s21": {
+   "label": "combined",
+   "eligible": [
+    "combined"
+   ],
+   "best_recall": 0.9230769230769231,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.9230769230769231,
+     "median_time": 0.5602,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.38461538461538464,
+     "median_time": 0.27214,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8461538461538461,
+     "median_time": 0.501808,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s21": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.2341,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.233197,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.275794,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s22": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.383821,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.307776,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.291793,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s22": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.4,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.27009,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.4,
+     "median_time": 0.426549,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.4,
+     "median_time": 0.532311,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s22": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8823529411764706,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.165131,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8823529411764706,
+     "median_time": 0.338778,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8823529411764706,
+     "median_time": 0.2729,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s22": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.265772,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.253624,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.220625,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s22": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.419382,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.335328,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.206596,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s22": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.165754,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.265333,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.196341,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s22": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.6,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.6,
+     "median_time": 0.270222,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.179184,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.6,
+     "median_time": 0.203755,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s22": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.25489,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.228825,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.278992,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s22": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.286778,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.337212,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.241553,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s22": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.147853,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.244133,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.282448,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s22": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.4,
+     "median_time": 0.16396,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.26176,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.291772,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s22": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.268254,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.239913,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.329162,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-delete-s23": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.388526,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.305985,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.311074,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s23": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.75,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.75,
+     "median_time": 0.531633,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.316871,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.75,
+     "median_time": 0.606616,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s23": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8823529411764706,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.160063,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8823529411764706,
+     "median_time": 0.176285,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8823529411764706,
+     "median_time": 0.232316,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s23": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.251063,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.234686,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.27457,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s23": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.8333333333333334,
+     "median_time": 0.185959,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.189005,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.278282,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s23": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.7142857142857143,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.349932,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.7142857142857143,
+     "median_time": 0.785718,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.7142857142857143,
+     "median_time": 0.578492,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s23": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.303721,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.406231,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.190727,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s23": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.360456,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.295363,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.270986,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s23": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.6,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.6,
+     "median_time": 0.444633,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.30791,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.6,
+     "median_time": 0.509014,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s23": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.42857142857142855,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.42857142857142855,
+     "median_time": 0.314331,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.42857142857142855,
+     "median_time": 0.233131,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.157679,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s23": {
+   "label": "combined",
+   "eligible": [
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.57979,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.38461538461538464,
+     "median_time": 0.268016,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.9230769230769231,
+     "median_time": 0.446773,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s23": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.311966,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.237333,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.237602,
+     "recall_nondeterministic": false
+    }
+   }
+  }
+ }
+}

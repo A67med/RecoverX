@@ -1,0 +1,33 @@
+{
+ "recoverx_version": "0.3.0",
+ "python": "3.12.3",
+ "platform": "Linux-6.18.58.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+ "cpu_count": 12,
+ "cpu_model": "AMD Ryzen 5 4600H with Radeon Graphics",
+ "mem_total_kib": 7807760,
+ "sklearn": "1.4.1.post1",
+ "numpy": "1.26.4",
+ "scipy": "1.11.4",
+ "pandas": "2.1.4",
+ "tools": [
+  {
+   "engine": "tsk",
+   "available": true,
+   "executables": {
+    "tsk_recover": "/usr/bin/tsk_recover"
+   },
+   "version": "4.12.1"
+  },
+  {
+   "engine": "photorec",
+   "available": true,
+   "executables": {
+    "photorec": "/usr/bin/photorec"
+   },
+   "version": "7.1"
+  }
+ ],
+ "mtools": "mtools (GNU mtools) 4.0.43",
+ "e2fsprogs": "mke2fs 1.47.0 (5-Feb-2023)",
+ "dosfstools": "mkfs.fat 4.2 (2021-01-31)"
+}

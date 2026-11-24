@@ -1,0 +1,366 @@
+{
+ "objective": {
+  "tolerance": 0.05,
+  "tie_epsilon_s": 0.0,
+  "_comment": "Pre-registered strategy-label objective. Frozen 2026-10-30 before any benchmark run. Do not tune on test results; report sensitivity instead.",
+  "quality_metric": "exact-file recall vs deleted ground truth (SHA-256)",
+  "tie_break_order": [
+   "tsk",
+   "photorec",
+   "combined"
+  ],
+  "sensitivity_tolerances": [
+   0.0,
+   0.1,
+   0.2
+  ],
+  "rule_policy": "rule-v1 (src/recoverx/ml/selector.py)",
+  "hyperparameter_grid": {
+   "max_depth": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "min_samples_leaf": [
+    1,
+    2,
+    4
+   ]
+  },
+  "model_selection": "highest validation balanced accuracy; ties -> smaller depth, then larger min_samples_leaf; final model refit on train+val",
+  "repeats": 3,
+  "primary_comparison": "per-test-image median end-to-end time and recall, CART vs each baseline (paired, Wilcoxon signed-rank, two-sided)",
+  "acceptable_quality": "per-image recall within 0.05 of the best fixed strategy on that image"
+ },
+ "labels": {
+  "fat16-delete-s100": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.79099,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8571428571428571,
+     "median_time": 0.634942,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.638351,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s100": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 0.42857142857142855,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.735742,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.42857142857142855,
+     "median_time": 1.608832,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.42857142857142855,
+     "median_time": 1.419888,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s100": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 0.8181818181818182,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.8181818181818182,
+     "median_time": 1.354834,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.657946,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8181818181818182,
+     "median_time": 1.31735,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s100": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.73272,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.654077,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.629012,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s100": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 0.702568,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 1.650456,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8571428571428571,
+     "median_time": 1.25374,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.685004,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.859909,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 1.047446,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.875,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.875,
+     "median_time": 1.437353,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.875,
+     "median_time": 1.257744,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.659372,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.6666666666666666,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.624012,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.6181,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.6666666666666666,
+     "median_time": 0.578641,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s100": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.555326,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.905283,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.885153,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.42857142857142855,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.42857142857142855,
+     "median_time": 1.058472,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.61477,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.42857142857142855,
+     "median_time": 1.109511,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 0.921048,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.4375,
+     "median_time": 0.595171,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 0.937752,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 0.0,
+   "tie": false,
+   "fallback_nothing_recoverable": true,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.0,
+     "median_time": 0.633971,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 0.590779,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.0,
+     "median_time": 0.566702,
+     "recall_nondeterministic": false
+    }
+   }
+  }
+ }
+}

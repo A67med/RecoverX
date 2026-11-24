@@ -1,0 +1,364 @@
+{
+ "objective": {
+  "tolerance": 0.05,
+  "tie_epsilon_s": 0.0,
+  "_comment": "Pre-registered strategy-label objective. Frozen 2026-10-30 before any benchmark run. Do not tune on test results; report sensitivity instead.",
+  "quality_metric": "exact-file recall vs deleted ground truth (SHA-256)",
+  "tie_break_order": [
+   "tsk",
+   "photorec",
+   "combined"
+  ],
+  "sensitivity_tolerances": [
+   0.0,
+   0.1,
+   0.2
+  ],
+  "rule_policy": "rule-v1 (src/recoverx/ml/selector.py)",
+  "hyperparameter_grid": {
+   "max_depth": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "min_samples_leaf": [
+    1,
+    2,
+    4
+   ]
+  },
+  "model_selection": "highest validation balanced accuracy; ties -> smaller depth, then larger min_samples_leaf; final model refit on train+val",
+  "repeats": 3,
+  "primary_comparison": "per-test-image median end-to-end time and recall, CART vs each baseline (paired, Wilcoxon signed-rank, two-sided)",
+  "acceptable_quality": "per-image recall within 0.05 of the best fixed strategy on that image"
+ },
+ "labels": {
+  "fat16-delete-s100": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 2.780922,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.8571428571428571,
+     "median_time": 2.276312,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 2.248688,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-overwrite-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.42857142857142855,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 2.480011,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.42857142857142855,
+     "median_time": 4.354809,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.42857142857142855,
+     "median_time": 5.306476,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-format-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.8181818181818182,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.8181818181818182,
+     "median_time": 4.733382,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 2.286202,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.8181818181818182,
+     "median_time": 5.502058,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat16-fragmented-s100": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 2.26065,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.6666666666666666,
+     "median_time": 2.348015,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 2.068638,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-delete-s100": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 2.551829,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 5.954398,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 4.691217,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-overwrite-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 2.320524,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 2.373764,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 2.820171,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-format-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 0.875,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 0.875,
+     "median_time": 5.636687,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.875,
+     "median_time": 4.962962,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 2.353527,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "fat32-fragmented-s100": {
+   "label": "tsk",
+   "eligible": [
+    "tsk",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 2.321263,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 1.0,
+     "median_time": 2.077025,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 0.5,
+     "median_time": 2.078869,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-delete-s100": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 2.179166,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 5.234232,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 5.172394,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-overwrite-s100": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 0.42857142857142855,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 0.42857142857142855,
+     "median_time": 4.29899,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 1.811707,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 0.42857142857142855,
+     "median_time": 4.20242,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-format-s100": {
+   "label": "photorec",
+   "eligible": [
+    "photorec",
+    "combined"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 4.03889,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.4375,
+     "median_time": 1.846948,
+     "recall_nondeterministic": false
+    },
+    "combined": {
+     "recall": 1.0,
+     "median_time": 4.149495,
+     "recall_nondeterministic": false
+    }
+   }
+  },
+  "ext4-fragmented-s100": {
+   "label": "combined",
+   "eligible": [
+    "combined",
+    "photorec"
+   ],
+   "best_recall": 1.0,
+   "tie": false,
+   "fallback_nothing_recoverable": false,
+   "per_strategy": {
+    "combined": {
+     "recall": 1.0,
+     "median_time": 1.963499,
+     "recall_nondeterministic": false
+    },
+    "tsk": {
+     "recall": 0.0,
+     "median_time": 2.081959,
+     "recall_nondeterministic": false
+    },
+    "photorec": {
+     "recall": 1.0,
+     "median_time": 2.044135,
+     "recall_nondeterministic": false
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,101 @@
+{
+  "model_type": "sklearn.tree.DecisionTreeClassifier (CART)",
+  "feature_names": [
+    "fs_detected",
+    "fs_fat",
+    "fs_ext",
+    "has_partition_table",
+    "image_mb",
+    "n_allocated",
+    "n_deleted",
+    "n_deleted_named",
+    "n_deleted_nonzero",
+    "frac_deleted_nonzero",
+    "n_realloc"
+  ],
+  "feature_schema_version": "1",
+  "classes": [
+    "combined",
+    "photorec",
+    "tsk"
+  ],
+  "hyperparameters": {
+    "max_depth": 1,
+    "min_samples_leaf": 4,
+    "random_state": 0
+  },
+  "trained_at": "2026-11-24T20:40:44.437947+00:00",
+  "n_train": 72,
+  "train_range": {
+    "fs_detected": [
+      1.0,
+      1.0
+    ],
+    "fs_fat": [
+      0.0,
+      1.0
+    ],
+    "fs_ext": [
+      0.0,
+      1.0
+    ],
+    "has_partition_table": [
+      0.0,
+      0.0
+    ],
+    "image_mb": [
+      48.0,
+      96.0
+    ],
+    "n_allocated": [
+      0.0,
+      42.0
+    ],
+    "n_deleted": [
+      0.0,
+      12.0
+    ],
+    "n_deleted_named": [
+      0.0,
+      10.0
+    ],
+    "n_deleted_nonzero": [
+      0.0,
+      10.0
+    ],
+    "frac_deleted_nonzero": [
+      0.0,
+      1.0
+    ],
+    "n_realloc": [
+      0.0,
+      0.0
+    ]
+  },
+  "training_splits": [
+    "train",
+    "val"
+  ],
+  "class_distribution": {
+    "combined": 4,
+    "photorec": 51,
+    "tsk": 17
+  },
+  "selected_on": "validation balanced accuracy",
+  "experiment": "e1",
+  "version": "cart-20261124-224044",
+  "tree_text": "|--- n_deleted_named <= 4.50\n|   |--- class: photorec\n|--- n_deleted_named >  4.50\n|   |--- class: tsk\n",
+  "feature_importance": {
+    "fs_detected": 0.0,
+    "fs_fat": 0.0,
+    "fs_ext": 0.0,
+    "has_partition_table": 0.0,
+    "image_mb": 0.0,
+    "n_allocated": 0.0,
+    "n_deleted": 0.0,
+    "n_deleted_named": 1.0,
+    "n_deleted_nonzero": 0.0,
+    "frac_deleted_nonzero": 0.0,
+    "n_realloc": 0.0
+  }
+}

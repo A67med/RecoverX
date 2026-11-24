@@ -1,0 +1,80 @@
+{
+  "created_at": "2026-11-24T20:40:44.307+00:00",
+  "recoverx_version": "0.3.0",
+  "dataset_dir": "d1",
+  "dataset_version": "1.0",
+  "n_images": 96,
+  "repeats": 3,
+  "order_seed": 2026,
+  "objective": {
+    "tolerance": 0.05,
+    "tie_epsilon_s": 0.0,
+    "_comment": "Pre-registered strategy-label objective. Frozen 2026-10-30 before any benchmark run. Do not tune on test results; report sensitivity instead.",
+    "quality_metric": "exact-file recall vs deleted ground truth (SHA-256)",
+    "tie_break_order": [
+      "tsk",
+      "photorec",
+      "combined"
+    ],
+    "sensitivity_tolerances": [
+      0.0,
+      0.1,
+      0.2
+    ],
+    "rule_policy": "rule-v1 (src/recoverx/ml/selector.py)",
+    "hyperparameter_grid": {
+      "max_depth": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "min_samples_leaf": [
+        1,
+        2,
+        4
+      ]
+    },
+    "model_selection": "highest validation balanced accuracy; ties -> smaller depth, then larger min_samples_leaf; final model refit on train+val",
+    "repeats": 3,
+    "primary_comparison": "per-test-image median end-to-end time and recall, CART vs each baseline (paired, Wilcoxon signed-rank, two-sided)",
+    "acceptable_quality": "per-image recall within 0.05 of the best fixed strategy on that image"
+  },
+  "rule_policy": "rule-v1 (frozen before test evaluation; pre-recovery features only)\n  if fs_detected == 0            -> photorec   (no metadata to follow)\n  elif n_deleted_nonzero == 0    -> photorec   (deleted entries carry no usable size/pointers)\n  elif frac_deleted_nonzero < 1 or n_realloc > 0 -> combined (metadata partly damaged)\n  else                           -> tsk",
+  "feature_names": [
+    "fs_detected",
+    "fs_fat",
+    "fs_ext",
+    "has_partition_table",
+    "image_mb",
+    "n_allocated",
+    "n_deleted",
+    "n_deleted_named",
+    "n_deleted_nonzero",
+    "frac_deleted_nonzero",
+    "n_realloc"
+  ],
+  "tools": [
+    {
+      "engine": "tsk",
+      "available": true,
+      "executables": {
+        "tsk_recover": "/usr/bin/tsk_recover"
+      },
+      "version": "4.12.1"
+    },
+    {
+      "engine": "photorec",
+      "available": true,
+      "executables": {
+        "photorec": "/usr/bin/photorec"
+      },
+      "version": "7.1"
+    }
+  ],
+  "python": "3.12.3",
+  "platform": "Linux-6.18.58.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpu_count": 12,
+  "cache_policy": "no cache dropping (unprivileged-safe); run order randomised per image block; first run of each block is not discarded but repeats are summarised by median"
+}
