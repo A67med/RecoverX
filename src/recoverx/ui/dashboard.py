@@ -80,7 +80,7 @@ def experiments() -> list[Path]:
 
 
 def include_historical_experiment(exps: list[Path]) -> None:
-    archive = PROJECT_ROOT / "results" / "exp1"
+    archive = PROJECT_ROOT / "research" / "results" / "exp1"
     if (archive / "experiment_config.json").is_file() and st.checkbox("Include historical results"):
         exps.append(archive)
 
@@ -399,7 +399,7 @@ def page_training():
     if not exps:
         not_measured("No experiment with labels yet — run Benchmark Laboratory phase 1")
         return
-    exp = st.selectbox("Experiment", exps, format_func=lambda p: f"{p.name} (historical, read-only)" if p.parent == PROJECT_ROOT / "results" else p.name)
+    exp = st.selectbox("Experiment", exps, format_func=lambda p: f"{p.name} (historical, read-only)" if p.parent == PROJECT_ROOT / "research" / "results" else p.name)
     labels = read_json(exp / "labels.json")
     rep = read_json(exp / "training_report.json")
     st.subheader("Feature definitions (all pre-recovery)")
@@ -429,12 +429,12 @@ def page_training():
                         width="stretch")
     st.subheader("Actions")
     c1, c2 = st.columns(2)
-    if c1.button("Retrain (phase 2: train/val only)", disabled=exp.parent == PROJECT_ROOT / "results"):
+    if c1.button("Retrain (phase 2: train/val only)", disabled=exp.parent == PROJECT_ROOT / "research" / "results"):
         from recoverx.benchmarking.experiment import Experiment
         cfg = read_json(exp / "experiment_config.json")
         Experiment(exp, Path(cfg["dataset_dir"])).phase2(progress=lambda s: None)
         st.rerun()
-    if rep and c2.button("Install this model as the active application model", disabled=exp.parent == PROJECT_ROOT / "results"):
+    if rep and c2.button("Install this model as the active application model", disabled=exp.parent == PROJECT_ROOT / "research" / "results"):
         import shutil
         source = exp / "models" / rep["model_version"]
         CartSelector.load(source)
@@ -471,7 +471,7 @@ def page_benchmark():
     if not exps:
         not_measured("No experiments recorded")
         return
-    exp = st.selectbox("Experiment", exps, format_func=lambda p: f"{p.name} (historical, read-only)" if p.parent == PROJECT_ROOT / "results" else p.name, key="bl_exp")
+    exp = st.selectbox("Experiment", exps, format_func=lambda p: f"{p.name} (historical, read-only)" if p.parent == PROJECT_ROOT / "research" / "results" else p.name, key="bl_exp")
     cfg = read_json(exp / "experiment_config.json")
     p1, p3 = read_jsonl(exp / "runs.jsonl"), read_jsonl(exp / "test_runs.jsonl")
     c = st.columns(4)
@@ -485,7 +485,7 @@ def page_benchmark():
     with st.expander("Saved configuration (replayable)"):
         st.json(cfg)
         st.download_button("Download configuration", json.dumps(cfg, indent=2), file_name=f"{exp.name}_config.json")
-    if p3 and st.button("Recompute analysis from saved records", disabled=exp.parent == PROJECT_ROOT / "results"):
+    if p3 and st.button("Recompute analysis from saved records", disabled=exp.parent == PROJECT_ROOT / "research" / "results"):
         from recoverx.benchmarking.analysis import analyze_experiment
         analyze_experiment(exp)
     res = read_json(exp / "analysis.json")

@@ -10,8 +10,8 @@ from recoverx.ml.evaluation import evaluate_records
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--records", type=Path, default=Path("results/exp1"))
-    parser.add_argument("--manifest", type=Path, default=Path("results/dataset_v1/manifest.json"))
+    parser.add_argument("--records", type=Path, default=Path("research/results/exp1"))
+    parser.add_argument("--manifest", type=Path, default=Path("research/datasets/dataset_v1/manifest.json"))
     parser.add_argument("--out", type=Path, default=Path("workspace/audits/modernization"))
     args = parser.parse_args()
     model, report = evaluate_records(args.records, args.manifest)

@@ -25,7 +25,7 @@ rep = json.loads((a.exp / "training_report.json").read_text())
 src = Path(rep["model_dir"])
 if not src.exists():
     src = a.exp.resolve() / "models" / Path(rep["model_dir"]).name
-if not (src / "model.json").is_file() and a.install_only and a.exp.resolve() == Path(__file__).resolve().parents[1] / "results/exp1":
+if not (src / "model.json").is_file() and a.install_only and a.exp.resolve() == Path(__file__).resolve().parents[1] / "research/results/exp1":
     from recoverx.ml.model_install import install_bundled_model
     sys.exit(print(f"active model: {install_bundled_model()}"))
 CartSelector.load(src)

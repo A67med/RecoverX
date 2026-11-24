@@ -43,9 +43,9 @@ def main() -> int:
         if bad or z.testzip():
             print(f"Archive check failed: {bad[:5]}", file=sys.stderr)
             return 1
-        cmd = z.read(f"{name}/START_RECOVERX_WINDOWS.cmd")
+        cmd = z.read(f"{name}/scripts/windows/start_streamlit.cmd")
         if b"\r\n" not in cmd:
-            print("START_RECOVERX_WINDOWS.cmd lost its CRLF line endings", file=sys.stderr)
+            print("scripts/windows/start_streamlit.cmd lost its CRLF line endings", file=sys.stderr)
             return 1
     digest = hashlib.sha256(zpath.read_bytes()).hexdigest()
     commit = subprocess.run(["git", "rev-parse", args.rev], cwd=ROOT, capture_output=True, text=True,

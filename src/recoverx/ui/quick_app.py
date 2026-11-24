@@ -243,10 +243,10 @@ def _step_method(diag: dict) -> dict:
         blocked = None
         if method in ("tsk", "photorec") and missing:
             blocked = f"{METHOD_LABEL[method]} needs {missing[0].upper()}, which is not available."
-            st.error(blocked + (" Run SETUP_WINDOWS.cmd." if missing[0] == "tsk" else
+            st.error(blocked + (" Run scripts\\windows\\setup_streamlit.cmd." if missing[0] == "tsk" else
                                 " Install testdisk in your default WSL Ubuntu (see the installation guide)."))
         elif missing and len(missing) == len(need):
-            blocked = "No recovery engine is available. Run SETUP_WINDOWS.cmd."
+            blocked = "No recovery engine is available. Run scripts\\windows\\setup_streamlit.cmd."
             st.error(blocked)
         elif missing:
             st.warning(f"{', '.join(m.upper() for m in missing)} unavailable: this method will run the remaining engine "

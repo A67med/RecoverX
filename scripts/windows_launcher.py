@@ -83,7 +83,7 @@ def main() -> int:
         if healthy(port):
             break
         if proc.poll() is not None:
-            print("RecoverX stopped during startup. Read the messages above, then run SETUP_WINDOWS.cmd again.")
+            print("RecoverX stopped during startup. Read the messages above, then run scripts\\windows\\setup_streamlit.cmd again.")
             return 1
         time.sleep(0.5)
     else:

@@ -34,7 +34,7 @@ inside Windows Subsystem for Linux.
 ## 3. Run setup
 
 1. Extract the RecoverX ZIP to a short path such as `C:\RecoverX` (long paths can break Python installs).
-2. Double-click **`SETUP_WINDOWS.cmd`**. A window shows each step:
+2. Double-click **`scripts\windows\setup_streamlit.cmd`**. A window shows each step:
    * finds Python 3.12;
    * downloads The Sleuth Kit 4.15.0 from its official GitHub release, verifies its SHA-256 and checks
      that `tsk_recover.exe` really starts;
@@ -50,7 +50,7 @@ mounts or writes to any disk.
 
 ## 4. Start RecoverX
 
-Double-click the **RecoverX** desktop icon (or `START_RECOVERX_WINDOWS.cmd`). A small console window
+Double-click the **RecoverX** desktop icon (or `scripts\windows\start_streamlit.cmd`). A small console window
 starts the local server (keep it open) and RecoverX opens in its own window. It is only reachable from
 this PC (`127.0.0.1`). Close the console window to stop RecoverX.
 
@@ -84,4 +84,4 @@ this PC (`127.0.0.1`). Close the console window to stop RecoverX.
 | *Image has unreadable sectors* | The drive has bad areas. Review the listed ranges; you may start recovery from the image explicitly. |
 | *Device disconnected* | Reconnect and start again. The partial image is kept as `*.img.partial` and is never used. |
 | RecoverX window does not open | Open `http://127.0.0.1:8501` (or the address shown in the console) in your browser. |
-| *RecoverX is not set up yet* | Run `SETUP_WINDOWS.cmd` again; it repairs a damaged environment. |
+| *RecoverX is not set up yet* | Run `scripts\windows\setup_streamlit.cmd` again; it repairs a damaged environment. |

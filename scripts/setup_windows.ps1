@@ -1,4 +1,4 @@
-# RecoverX v0.4 Windows setup, run from SETUP_WINDOWS.cmd (double-click).
+# RecoverX v0.4 Windows setup, run from scripts\windows\setup_streamlit.cmd (double-click).
 # - Uses ONLY official downloads (Sleuth Kit release ZIP, verified by SHA-256) and PyPI packages.
 # - Runs as the normal user: never elevates, never changes UAC/security settings,
 #   never formats, mounts or writes to any disk. USB imaging asks for elevation
@@ -102,7 +102,7 @@ function Test-PhotoRec {
     if (-not (Test-Path -LiteralPath $wsl)) {
         Write-Warning 'WSL is not installed. PhotoRec carving is unavailable; TSK recovery still works.'
         Write-Host '  To enable PhotoRec yourself: run "wsl --install -d Ubuntu-24.04" in an administrator PowerShell, reboot,'
-        Write-Host '  finish the Ubuntu first-run (create a normal user), then run SETUP_WINDOWS.cmd again.'
+        Write-Host '  finish the Ubuntu first-run (create a normal user), then run scripts\windows\setup_streamlit.cmd again.'
         return
     }
     $probe = 'test $(id -u) -ne 0 || exit 77; command -v photorec >/dev/null || exit 3; photorec /version | head -n 3'
@@ -166,13 +166,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Could not create the Python environment' }
     }
     Step 'Installing RecoverX Python dependencies'
-    $constraints = Join-Path $root 'constraints-windows.txt'
-    $pipArgs = @('-m', 'pip', 'install', '--disable-pip-version-check', '-r', (Join-Path $root 'requirements-windows.txt'))
+    $constraints = Join-Path $root 'requirements\constraints-windows.txt'
+    $pipArgs = @('-m', 'pip', 'install', '--disable-pip-version-check', '-r', (Join-Path $root 'requirements\windows.txt'))
     if (Test-Path -LiteralPath $constraints) { $pipArgs += @('-c', $constraints) }
     & $pyLocal @pipArgs
     if ($LASTEXITCODE -ne 0 -and (Test-Path -LiteralPath $constraints)) {
         Write-Warning 'Tested package versions could not be installed; retrying with the newest compatible versions.'
-        & $pyLocal -m pip install --disable-pip-version-check -r (Join-Path $root 'requirements-windows.txt')
+        & $pyLocal -m pip install --disable-pip-version-check -r (Join-Path $root 'requirements\windows.txt')
     }
     if ($LASTEXITCODE -ne 0) { throw 'Could not install required Python packages (check your internet connection).' }
     & $pyLocal -c 'import recoverx, streamlit, sklearn, pandas, reportlab, PIL; print(recoverx.__version__)'
@@ -192,7 +192,7 @@ try {
     elseif ($desktop -and (Test-Path -LiteralPath $desktop)) {
         $shell = New-Object -ComObject WScript.Shell
         $shortcut = $shell.CreateShortcut((Join-Path $desktop 'RecoverX.lnk'))
-        $shortcut.TargetPath = (Join-Path $root 'START_RECOVERX_WINDOWS.cmd')
+        $shortcut.TargetPath = (Join-Path $root 'scripts\windows\start_streamlit.cmd')
         $shortcut.WorkingDirectory = $root
         $shortcut.Description = 'RecoverX - Quick Recovery'
         $shortcut.IconLocation = (Join-Path $root 'assets\recoverx.ico') + ',0'
@@ -201,7 +201,7 @@ try {
         Write-Host "Desktop shortcut: $desktop\RecoverX.lnk"
     }
     Write-Host ''
-    Write-Host 'SUCCESS: RecoverX is ready. Double-click the RecoverX desktop icon or START_RECOVERX_WINDOWS.cmd.' -ForegroundColor Green
+    Write-Host 'SUCCESS: RecoverX is ready. Double-click the RecoverX desktop icon or scripts\windows\start_streamlit.cmd.' -ForegroundColor Green
     exit 0
 } catch {
     Write-Host ''

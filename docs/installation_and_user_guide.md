@@ -15,7 +15,7 @@ python3 -m venv .venv
 ## Windows 11 / Windows 10 (64-bit)
 
 Follow the step-by-step guide in [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md):
-install Python 3.12 (64-bit), double-click `SETUP_WINDOWS.cmd`, then start RecoverX from the desktop
+install Python 3.12 (64-bit), double-click `scripts\windows\setup_streamlit.cmd`, then start RecoverX from the desktop
 icon. TSK runs natively; PhotoRec runs as a non-root user in the default WSL distribution (optional).
 
 Quick Recovery (v0.4) can image a **USB flash drive directly**: select it under *USB drive*, choose an
@@ -31,7 +31,7 @@ Install the forensic prerequisites first.
 ```bash
 sudo apt update
 sudo apt install python3-venv sleuthkit testdisk dosfstools e2fsprogs mtools
-bash INSTALL_ON_KALI.sh
+bash scripts/linux/install_desktop_entry.sh
 ```
 
 On graphical Kali, the launcher registers an application-menu entry and opens the loopback-only app.

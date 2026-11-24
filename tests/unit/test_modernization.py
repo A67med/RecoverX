@@ -31,16 +31,16 @@ def test_tie_epsilon_uses_registered_order():
 
 def test_evaluation_enforces_disjoint_seed_splits(tmp_path):
     base=Path(__file__).resolve().parents[2]
-    manifest=json.loads((base/'results/dataset_v1/manifest.json').read_text())
+    manifest=json.loads((base/'research/datasets/dataset_v1/manifest.json').read_text())
     manifest['images'][-1]['seed']=manifest['images'][0]['seed']
     path=tmp_path/'manifest.json'; path.write_text(json.dumps(manifest))
     with pytest.raises(ValueError,match='leakage'):
-        evaluate_records(base/'results/exp1',path)
+        evaluate_records(base/'research/results/exp1',path)
 
 
 def test_real_record_evaluation_preserves_test_holdout():
     base=Path(__file__).resolve().parents[2]
-    model, report=evaluate_records(base/'results/exp1',base/'results/dataset_v1/manifest.json',
+    model, report=evaluate_records(base/'research/results/exp1',base/'research/datasets/dataset_v1/manifest.json',
                                    {'max_depth':[1], 'min_samples_leaf':[4]})
     assert report['split_sizes']=={'train':60,'val':12,'test':24}
     assert not any(i.endswith(('s6','s7')) for i in model.meta['training_ids'])
